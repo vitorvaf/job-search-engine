@@ -1,0 +1,33 @@
+{
+  "id": "b1f3b9ad-7d6b-4c3a-9e70-fb3b2c6f0e58",
+  "source": {
+    "name": "Greenhouse",
+    "type": "Greenhouse",
+    "sourceJobId": "gh-987",
+    "url": "https://boards.greenhouse.io/company/jobs/987"
+  },
+  "title": "Backend Engineer",
+  "company": { "name": "Empresa Y", "website": null, "industry": null },
+  "locationText": "Remote - Brazil",
+  "location": { "country": "BR", "state": null, "city": null },
+  "workMode": "Remote",
+  "seniority": "Unknown",
+  "employmentType": "Unknown",
+  "salary": null,
+  "descriptionText": "We use .NET, PostgreSQL, Kafka...",
+  "tags": ["dotnet", "postgresql", "kafka"],
+  "languages": ["en"],
+  "postedAt": null,
+  "capturedAt": "2026-02-10T13:00:00Z",
+  "lastSeenAt": "2026-02-10T13:00:00Z",
+  "status": "Active",
+  "dedupe": {
+    "fingerprint": "sha256:....",
+    "clusterId": null
+  },
+  "metadata": {
+    "raw": {
+      "department": "Engineering"
+    }
+  }
+}
