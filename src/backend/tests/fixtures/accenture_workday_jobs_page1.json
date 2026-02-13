@@ -1,0 +1,125 @@
+{
+  "_meta": {
+    "capturedAt": "2026-02-11T14:30:00Z",
+    "requestPath": "/wday/cxs/accenture/AccentureCareers/jobs",
+    "method": "POST",
+    "requestBody": {
+      "appliedFacets": {},
+      "limit": 50,
+      "offset": 0,
+      "searchText": ""
+    },
+    "note": "cookies/tokens redacted"
+  },
+  "total": 1264,
+  "jobPostings": [
+    {
+      "title": "Application Developer",
+      "externalPath": "/job/Sao-Paulo/Application-Developer_R00123451",
+      "locationsText": "Sao Paulo, Brazil",
+      "bulletFields": ["Sao Paulo, Brazil", "Full time"],
+      "postedOn": "2026-01-29T13:20:00Z",
+      "timeType": "Full time",
+      "id": "R00123451"
+    },
+    {
+      "title": "Data Engineer",
+      "externalPath": "/job/Curitiba/Data-Engineer_R00123452",
+      "locationsText": "Curitiba, Brazil",
+      "bulletFields": ["Curitiba, Brazil", "Full time"],
+      "postedOn": "2026-01-28T11:02:00Z",
+      "timeType": "Full time",
+      "id": "R00123452"
+    },
+    {
+      "title": "Cloud Security Analyst",
+      "externalPath": "/job/Recife/Cloud-Security-Analyst_R00123453",
+      "locationsText": "Recife, Brazil",
+      "bulletFields": ["Recife, Brazil", "Full time"],
+      "postedOn": "2026-01-27T09:45:00Z",
+      "timeType": "Full time",
+      "id": "R00123453"
+    },
+    {
+      "title": "SAP Functional Consultant",
+      "externalPath": "/job/Sao-Paulo/SAP-Functional-Consultant_R00123454",
+      "locationsText": "Sao Paulo, Brazil",
+      "bulletFields": ["Sao Paulo, Brazil", "Full time"],
+      "postedOn": "2026-01-26T16:15:00Z",
+      "timeType": "Full time",
+      "id": "R00123454"
+    },
+    {
+      "title": "Senior Software Engineer",
+      "externalPath": "/job/Rio-de-Janeiro/Senior-Software-Engineer_R00123455",
+      "locationsText": "Rio de Janeiro, Brazil",
+      "bulletFields": ["Rio de Janeiro, Brazil", "Full time"],
+      "postedOn": "2026-01-25T18:01:00Z",
+      "timeType": "Full time",
+      "id": "R00123455"
+    },
+    {
+      "title": "DevOps Engineer",
+      "externalPath": "/job/Belo-Horizonte/DevOps-Engineer_R00123456",
+      "locationsText": "Belo Horizonte, Brazil",
+      "bulletFields": ["Belo Horizonte, Brazil", "Full time"],
+      "postedOn": "2026-01-24T12:33:00Z",
+      "timeType": "Full time",
+      "id": "R00123456"
+    },
+    {
+      "title": "Machine Learning Engineer",
+      "externalPath": "/job/Sao-Paulo/Machine-Learning-Engineer_R00123457",
+      "locationsText": "Sao Paulo, Brazil",
+      "bulletFields": ["Sao Paulo, Brazil", "Full time"],
+      "postedOn": "2026-01-23T10:20:00Z",
+      "timeType": "Full time",
+      "id": "R00123457"
+    },
+    {
+      "title": "QA Automation Engineer",
+      "externalPath": "/job/Porto-Alegre/QA-Automation-Engineer_R00123458",
+      "locationsText": "Porto Alegre, Brazil",
+      "bulletFields": ["Porto Alegre, Brazil", "Full time"],
+      "postedOn": "2026-01-22T08:12:00Z",
+      "timeType": "Full time",
+      "id": "R00123458"
+    },
+    {
+      "title": "Mobile Developer (iOS)",
+      "externalPath": "/job/Sao-Paulo/Mobile-Developer-iOS_R00123459",
+      "locationsText": "Sao Paulo, Brazil",
+      "bulletFields": ["Sao Paulo, Brazil", "Full time"],
+      "postedOn": "2026-01-21T14:47:00Z",
+      "timeType": "Full time",
+      "id": "R00123459"
+    },
+    {
+      "title": "Mobile Developer (Android)",
+      "externalPath": "/job/Florianopolis/Mobile-Developer-Android_R00123460",
+      "locationsText": "Florianopolis, Brazil",
+      "bulletFields": ["Florianopolis, Brazil", "Full time"],
+      "postedOn": "2026-01-20T07:40:00Z",
+      "timeType": "Full time",
+      "id": "R00123460"
+    },
+    {
+      "title": "Frontend Engineer",
+      "externalPath": "/job/Remote-Brazil/Frontend-Engineer_R00123461",
+      "locationsText": "Remote - Brazil",
+      "bulletFields": ["Remote - Brazil", "Full time"],
+      "postedOn": "2026-01-19T09:10:00Z",
+      "timeType": "Full time",
+      "id": "R00123461"
+    },
+    {
+      "title": "Backend Engineer (.NET)",
+      "externalPath": "/job/Campinas/Backend-Engineer-NET_R00123462",
+      "locationsText": "Campinas, Brazil",
+      "bulletFields": ["Campinas, Brazil", "Full time"],
+      "postedOn": "2026-01-18T19:05:00Z",
+      "timeType": "Full time",
+      "id": "R00123462"
+    }
+  ]
+}

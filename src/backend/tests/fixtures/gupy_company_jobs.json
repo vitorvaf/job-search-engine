@@ -1,0 +1,22 @@
+{
+  "data": {
+    "jobs": [
+      {
+        "id": "acme-1001",
+        "name": "Software Engineer (.NET)",
+        "jobUrl": "https://example.gupy.io/jobs/1001",
+        "location": "Remoto - Brasil",
+        "publishedAt": "2026-02-01T10:00:00Z",
+        "description": "Atuar com C#, .NET 8, PostgreSQL e mensageria."
+      },
+      {
+        "id": "acme-1002",
+        "name": "Senior Frontend Engineer",
+        "jobUrl": "https://example.gupy.io/jobs/1002",
+        "location": "Sao Paulo, SP",
+        "publishedAt": "2026-01-25T15:30:00Z",
+        "description": "React, TypeScript e testes automatizados."
+      }
+    ]
+  }
+}

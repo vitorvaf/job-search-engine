@@ -109,6 +109,22 @@ ServiceFabricBackup/
 # Node (if using frontend)
 node_modules/
 npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+.turbo/
+
+# React
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Environment variables
 .env

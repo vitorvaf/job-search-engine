@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "capturedAt": "2026-02-11T14:35:00Z",
+    "requestPath": "/wday/cxs/accenture/AccentureCareers/job/Sao-Paulo/Application-Developer_R00123451",
+    "method": "GET",
+    "note": "cookies/tokens redacted"
+  },
+  "jobPostingInfo": {
+    "title": "Application Developer",
+    "jobDescription": "<p>At Accenture, you will design and build scalable systems.</p><p>Responsibilities include coding, testing and collaborating with cross-functional teams.</p><ul><li>Build cloud native APIs</li><li>Improve CI/CD pipelines</li><li>Mentor junior developers</li></ul>",
+    "timeType": "Full time",
+    "location": "Sao Paulo, Brazil"
+  }
+}
