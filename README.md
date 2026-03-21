@@ -90,3 +90,63 @@ curl "http://localhost:3000/api/sources"
 ```bash
 dotnet test src/backend/Jobs.sln
 ```
+
+---
+
+## Using with GitHub Copilot
+
+Este repositório está configurado como **Copilot-ready**: instruções de contexto, prompts e convenções são injetados automaticamente no Copilot para sugestões mais precisas.
+
+### Configuração incluída
+
+| Arquivo | Finalidade |
+|---------|-----------|
+| `.github/copilot-instructions.md` | Instruções globais lidas pelo Copilot em todo contexto |
+| `.github/instructions/backend.instructions.md` | Regras C# / .NET ativas para `src/backend/**` |
+| `.github/instructions/frontend.instructions.md` | Regras Next.js / TypeScript ativas para `src/frontend/**` |
+| `.github/instructions/testing.instructions.md` | Convenções xUnit ativas para `src/backend/Jobs.Tests/**` |
+| `.github/prompts/new-source.prompt.md` | Prompt `/new-source` — gera um conector `IJobSource` completo |
+| `.github/prompts/new-test.prompt.md` | Prompt `/new-test` — gera uma classe de testes xUnit completa |
+
+### Prompts úteis (chat do Copilot)
+
+**Criar um novo conector de fonte de vagas:**
+```
+/new-source
+```
+> Preencha os parâmetros interativos (nome, URL, formato) e o Copilot gera o conector, fixture, teste e documentação.
+
+**Criar testes para um parser existente:**
+```
+/new-test
+```
+
+**Exemplos de perguntas contextuais:**
+
+```
+Como adiciono uma nova fonte de vagas no padrão IJobSource deste projeto?
+```
+```
+Qual é o modelo de domínio JobPosting e quais campos existem?
+```
+```
+Como funciona a deduplicação de vagas neste projeto?
+```
+```
+Crie um endpoint GET /api/jobs/stats que retorne totais agrupados por WorkMode usando o padrão Minimal API deste projeto.
+```
+```
+Escreva um teste xUnit para o InfoJobsHtmlParser cobrindo o caso de HTML vazio.
+```
+```
+Adicione suporte a filtro por `company` no frontend mantendo o padrão BFF deste projeto.
+```
+
+### O que o Copilot já sabe sobre este projeto
+
+- Nunca sugerirá EF Migrations (schema gerenciado via `schema.sql`)
+- Nunca usará `Newtonsoft.Json` (projeto usa `System.Text.Json`)
+- Nunca criará MVC controllers (apenas Minimal API)
+- Nunca criará um diretório `pages/` no frontend (App Router exclusivamente)
+- Sempre roteará chamadas do browser pelo BFF (`app/api/`)
+- Sempre usará o `HttpClient` nomeado `"Sources"` para chamadas HTTP externas

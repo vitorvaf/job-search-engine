@@ -1,0 +1,28 @@
+# CODEOWNERS — automatic review assignment
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Format: <pattern>  <@user-or-team>
+# Replace @vitorvaf with the correct GitHub username(s) or @org/team slugs.
+
+# Default owner for everything not matched below
+*                           @vitorvaf
+
+# Domain model — changes require extra scrutiny
+src/backend/Jobs.Domain/    @vitorvaf
+
+# Database schema — no migrations; changes to schema.sql are critical
+src/backend/Jobs.Infrastructure/Data/schema.sql  @vitorvaf
+
+# Ingestion pipeline and connectors
+src/backend/Jobs.Infrastructure/Ingestion/       @vitorvaf
+
+# API surface
+src/backend/Jobs.Api/       @vitorvaf
+
+# Frontend BFF and type contracts
+src/frontend/app/api/       @vitorvaf
+src/frontend/lib/types.ts   @vitorvaf
+
+# CI/CD and configuration
+.github/                    @vitorvaf
+docker-compose.yaml         @vitorvaf

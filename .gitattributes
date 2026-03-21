@@ -1,0 +1,47 @@
+# Auto-detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Explicitly declare text files
+*.cs        text eol=lf diff=csharp
+*.csproj    text eol=lf
+*.sln       text eol=lf
+*.props     text eol=lf
+*.targets   text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.mjs       text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.sql       text eol=lf
+*.html      text eol=lf
+*.css       text eol=lf
+*.sh        text eol=lf
+
+# Declare files that will always have CRLF line endings on checkout (Windows scripts)
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+
+# Denote all files that are truly binary and should not be modified
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.svg       binary
+*.woff      binary
+*.woff2     binary
+*.eot       binary
+*.ttf       binary
+*.otf       binary
+*.zip       binary
+*.gz        binary
+*.pdf       binary
+
+# Linguist — language detection for GitHub statistics
+*.cs        linguist-language=C#
+*.csproj    linguist-language=XML linguist-detectable=false
+*.sln       linguist-detectable=false
