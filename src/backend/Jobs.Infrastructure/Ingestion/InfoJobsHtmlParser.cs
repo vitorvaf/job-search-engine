@@ -401,7 +401,8 @@ public static class InfoJobsHtmlParser
 
     private static string MakeAbsolute(string rawUrl, Uri baseUri)
     {
-        if (Uri.TryCreate(rawUrl, UriKind.Absolute, out var absolute))
+        if (Uri.TryCreate(rawUrl, UriKind.Absolute, out var absolute) &&
+            (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps))
         {
             return absolute.ToString();
         }
