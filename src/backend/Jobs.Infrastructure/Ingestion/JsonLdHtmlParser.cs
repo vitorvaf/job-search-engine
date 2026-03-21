@@ -261,7 +261,8 @@ public static class JsonLdHtmlParser
 
     private static string MakeAbsolute(string url, Uri baseUri)
     {
-        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute))
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute) &&
+            (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps))
         {
             return absolute.ToString();
         }

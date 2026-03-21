@@ -6,8 +6,8 @@ namespace Jobs.Infrastructure.Ingestion;
 public static class TotvsHtmlParser
 {
     private static readonly Regex JobAnchorRegex = new(
-        "<a[^>]*href=\"(?<href>[^\"]+)\"[^>]*>(?<title>.*?)</a>(?<tail>.{0,600})",
-        RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled);
+        "<a[^>]*href=\"(?<href>[^\"]+)\"[^>]*>(?<title>.*?)</a>(?<tail>(?:(?!<a)[\\s\\S]){0,300})",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public static IReadOnlyList<ParsedSourceJob> ParseList(string html, string startUrl)
     {
