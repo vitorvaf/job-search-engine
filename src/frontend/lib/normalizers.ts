@@ -72,7 +72,7 @@ export function normalizeSources(raw: unknown): Source[] {
   if (!Array.isArray(raw)) return [];
 
   return raw
-    .map((item) => {
+    .map((item): Source | null => {
       const source = typeof item === "object" && item !== null ? (item as Record<string, unknown>) : {};
       const name = safeString(source.name);
       if (!name) return null;
@@ -83,7 +83,7 @@ export function normalizeSources(raw: unknown): Source[] {
         type: safeString(source.type),
         baseUrl: safeString(source.baseUrl),
         enabled: typeof source.enabled === "boolean" ? source.enabled : undefined,
-      } satisfies Source;
+      };
     })
     .filter((item): item is Source => item !== null);
 }
