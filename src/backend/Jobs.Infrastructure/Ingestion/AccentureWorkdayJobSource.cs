@@ -247,6 +247,9 @@ public sealed class AccentureWorkdayJobSource : IJobSource
         req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         req.Headers.UserAgent.Clear();
         req.Headers.UserAgent.ParseAdd(string.IsNullOrWhiteSpace(_source.UserAgent) ? "JobSearchEngineBot/0.1 (contact: unknown)" : _source.UserAgent);
+        // Workday CXS API validates Origin/Referer as a CSRF check; without one of these the API returns HTTP 400.
+        req.Headers.TryAddWithoutValidation("Origin", $"https://{uri.Host}");
+        req.Headers.TryAddWithoutValidation("Referer", $"https://{uri.Host}{_source.SitePath}");
 
         if (jsonBody is not null)
         {
