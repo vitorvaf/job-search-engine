@@ -9,7 +9,7 @@ import { type Job } from "@/lib/types";
 import { formatDate, joinTags, sanitizeDescription } from "@/lib/utils";
 
 type JobPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 async function getBaseUrl() {
