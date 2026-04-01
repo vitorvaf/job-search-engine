@@ -60,9 +60,13 @@ public sealed class JsonFixtureJobSource : IJobSource
 
             var workMode = WorkMode.Unknown;
             if (location.Contains("remote", StringComparison.OrdinalIgnoreCase) || location.Contains("remoto", StringComparison.OrdinalIgnoreCase))
+            {
                 workMode = WorkMode.Remote;
+            }
             else if (location.Contains("híbrido", StringComparison.OrdinalIgnoreCase) || location.Contains("hibrido", StringComparison.OrdinalIgnoreCase))
+            {
                 workMode = WorkMode.Hybrid;
+            }
 
             var fingerprint = _fp.Compute(company, title, location, workMode.ToString());
             var sourceType = ParseSourceType(source);
@@ -97,17 +101,17 @@ public sealed class JsonFixtureJobSource : IJobSource
         var text = (title + " " + desc).ToLowerInvariant();
         var tags = new List<string>();
 
-        void Add(string t) { if (!tags.Contains(t)) tags.Add(t); }
+        void Add(string t) { if (!tags.Contains(t)) { tags.Add(t); } }
 
-        if (text.Contains(".net")) Add("dotnet");
-        if (text.Contains("c#")) Add("csharp");
-        if (text.Contains("react")) Add("react");
-        if (text.Contains("typescript")) Add("typescript");
-        if (text.Contains("postgres")) Add("postgresql");
-        if (text.Contains("kafka")) Add("kafka");
-        if (text.Contains("azure")) Add("azure");
-        if (text.Contains("aws")) Add("aws");
-        if (text.Contains("docker")) Add("docker");
+        if (text.Contains(".net")) { Add("dotnet"); }
+        if (text.Contains("c#")) { Add("csharp"); }
+        if (text.Contains("react")) { Add("react"); }
+        if (text.Contains("typescript")) { Add("typescript"); }
+        if (text.Contains("postgres")) { Add("postgresql"); }
+        if (text.Contains("kafka")) { Add("kafka"); }
+        if (text.Contains("azure")) { Add("azure"); }
+        if (text.Contains("aws")) { Add("aws"); }
+        if (text.Contains("docker")) { Add("docker"); }
 
         return tags;
     }
@@ -115,7 +119,7 @@ public sealed class JsonFixtureJobSource : IJobSource
     private static IReadOnlyList<string> InferLanguages(string desc)
     {
         // heurística bem simples
-        if (desc.Any(c => "ãõçáéíóú".Contains(char.ToLowerInvariant(c)))) return new[] { "pt-BR" };
+        if (desc.Any(c => "ãõçáéíóú".Contains(char.ToLowerInvariant(c)))) { return new[] { "pt-BR" }; }
         return new[] { "en" };
     }
 

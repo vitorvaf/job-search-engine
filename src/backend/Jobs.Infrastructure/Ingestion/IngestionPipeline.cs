@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Jobs.Domain.Models;
 using Jobs.Infrastructure.Data;
 using Jobs.Infrastructure.Data.Entities;
@@ -7,7 +8,6 @@ using Jobs.Infrastructure.Search;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace Jobs.Infrastructure.Ingestion;
 

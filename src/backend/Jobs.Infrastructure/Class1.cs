@@ -1,4 +1,4 @@
-﻿namespace Jobs.Infrastructure;
+namespace Jobs.Infrastructure;
 
 public class Class1
 {
