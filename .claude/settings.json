@@ -53,5 +53,24 @@
       "Read(./CLAUDE.local.md)",
       "Read(./secrets/**)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/remind-boundary-validation.mjs",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/remind-ingestion-validation.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }

@@ -7,6 +7,9 @@ Este projeto tem duas camadas de contrato:
 
 O contrato bruto é definido no código de `src/backend/Jobs.Api/Program.cs`.
 
+Guardrail automatizado:
+- `node scripts/check-boundary-drift.mjs` valida enums, sorts, query params e referências locais de `BACKEND_URL` entre backend, frontend, docs e CI.
+
 ## Backend REST API
 
 Base URL: `/api`

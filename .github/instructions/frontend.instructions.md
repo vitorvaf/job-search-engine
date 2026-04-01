@@ -38,3 +38,4 @@ If filters, sort, pagination, or enum values change, review:
 - `src/frontend/lib/types.ts`
 - `src/frontend/lib/constants.ts`
 - the affected UI components
+- `scripts/check-boundary-drift.mjs`

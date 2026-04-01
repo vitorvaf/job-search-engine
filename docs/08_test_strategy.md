@@ -30,6 +30,7 @@ Não há, neste momento, suíte dedicada de testes unitários ou e2e para o fron
 
 `.github/workflows/ci.yml` roda:
 - restore, build e `dotnet test` do backend
+- `node scripts/check-boundary-drift.mjs` para guardar enums, filters, query params, sorts e URLs locais do boundary backend/frontend
 - `npm ci`, `npm run lint` e `npm run build` do frontend
 
 ## Como escolher o teste certo

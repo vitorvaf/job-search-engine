@@ -112,6 +112,8 @@ dotnet test src/backend/Jobs.sln
 
 Frontend:
 ```bash
+node scripts/check-boundary-drift.mjs
+
 cd src/frontend
 npm run lint
 npm run build
@@ -190,7 +192,13 @@ Este repositório também está configurado para Claude Code com memória compar
 | `.claude/rules/testing.md` | Regras de testes e fixtures |
 | `.claude/commands/new-source.md` | Slash command `/new-source` para adicionar/configurar uma nova fonte |
 | `.claude/commands/new-test.md` | Slash command `/new-test` para expandir cobertura xUnit |
+| `.claude/commands/trace-job-flow.md` | Slash command `/trace-job-flow` para rastrear o fluxo da vaga ponta a ponta |
+| `.claude/commands/review-boundary.md` | Slash command `/review-boundary` para revisar impacto cross-stack |
+| `.claude/agents/parser-reviewer.md` | Subagente de revisão de fontes, parsers e fixtures |
+| `.claude/agents/boundary-reviewer.md` | Subagente de revisão de contrato backend/BFF/frontend |
+| `.claude/hooks/*.mjs` | Hooks leves de lembrete após edições em boundary e ingestão |
 | `.claude/settings.local.example.json` | Exemplo opcional para fluxo local mais rápido |
+| `scripts/check-boundary-drift.mjs` | Guarda de CI para enums, filtros, sorts, query params e URLs backend/frontend |
 
 ### Comandos úteis no Claude Code
 
@@ -198,6 +206,8 @@ Este repositório também está configurado para Claude Code com memória compar
 claude
 /new-source Greenhouse https://boards.greenhouse.io json
 /new-test GupyJobsJsonParser gupy_company_jobs.json json
+/trace-job-flow GupyExample
+/review-boundary "alteracao em filtros e sort da listagem"
 ```
 
 ### Fluxo recomendado
@@ -205,4 +215,6 @@ claude
 1. Se quiser um fluxo mais rápido, mescle `.claude/settings.local.example.json` no seu `.claude/settings.local.json`.
 2. Use `/memory` para editar `CLAUDE.md`.
 3. Use `/permissions` e `/config` para inspecionar o comportamento ativo.
-4. Quando as convenções do projeto mudarem, mantenha `.claude/` e `.github/` alinhados.
+4. Use `/trace-job-flow` quando precisar entender o caminho completo de uma vaga, ou `/review-boundary` antes de fechar mudanças cross-stack.
+5. Os hooks do projeto adicionam lembretes leves quando você edita arquivos de ingestão ou boundary; trate-os como guardrails, não como substituto para docs e revisão.
+6. Quando as convenções do projeto mudarem, mantenha `.claude/` e `.github/` alinhados.

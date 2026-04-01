@@ -42,7 +42,7 @@ Default local URLs:
 Notes:
 - The root `.env` is only for local `docker compose` overrides; the compose file already has sane defaults.
 - The backend runs locally from `appsettings.json` / `appsettings.Development.json`; no backend `.env` file is required by default.
-- `BACKEND_URL` is only needed by the Next.js BFF.
+- `BACKEND_URL=http://localhost:5004` is only needed by the Next.js BFF.
 
 ## Project structure
 
@@ -140,6 +140,9 @@ Use the assistant prompts or slash commands only as scaffolding help. The curren
 ```bash
 # Backend
 dotnet test src/backend/Jobs.sln
+
+# Cross-stack boundary drift
+node scripts/check-boundary-drift.mjs
 
 # Frontend
 cd src/frontend

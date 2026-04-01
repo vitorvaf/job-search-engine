@@ -95,6 +95,7 @@ Expected change set:
 - Backend tests use xUnit.
 - The current automated suite is strongest around parser, normalizer, fingerprint, and fixture-based validation coverage.
 - Fixtures live in `src/backend/tests/fixtures/`.
+- `node scripts/check-boundary-drift.mjs` is the lightweight guardrail for backend/frontend/BFF drift and should be considered when filters, enums, sort, pagination, or local backend URL references change.
 - Frontend validation currently relies on `npm run lint` and `npm run build`.
 - Do not claim API, worker, pipeline, BFF, or frontend test coverage unless it actually exists.
 

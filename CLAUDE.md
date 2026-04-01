@@ -44,6 +44,7 @@ Browser -> Next.js Route Handlers (BFF) -> Jobs.Api -> Meilisearch / PostgreSQL
 - Worker: `dotnet run --project src/backend/Jobs.Worker`
 - Worker once for a source: `dotnet run --project src/backend/Jobs.Worker -- --run-once --source=InfoJobs`
 - Backend tests: `dotnet test src/backend/Jobs.sln`
+- Boundary drift: `node scripts/check-boundary-drift.mjs`
 - Frontend lint: `cd src/frontend && npm run lint`
 - Frontend build: `cd src/frontend && npm run build`
 
@@ -61,6 +62,7 @@ Browser -> Next.js Route Handlers (BFF) -> Jobs.Api -> Meilisearch / PostgreSQL
 - Route Handlers in `src/frontend/app/api/` are the BFF boundary for browser traffic.
 - `src/frontend/lib/types.ts` defines the normalized frontend model. The raw backend payload is defined by `src/backend/Jobs.Api/Program.cs` and documented in `docs/07_api_contracts.md`.
 - If filters, enums, sorting, or pagination change, review backend API, BFF route handlers, `api-proxy.ts`, `normalizers.ts`, `types.ts`, `constants.ts`, and the affected UI together.
+- `scripts/check-boundary-drift.mjs` is the lightweight shared guardrail for backend/API/BFF/frontend drift. Run it when those boundaries change.
 - Prefer existing source families (`CorporateCareers`, `JsonLd`, `GupyCompanies`) before adding a brand-new connector.
 - New ingestion sources should ship with fixtures, tests, and docs updates together.
 

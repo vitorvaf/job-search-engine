@@ -44,6 +44,10 @@
 - [ ] Styling via Tailwind utility classes — no inline `style` attributes
 - [ ] No new icon library added — only `lucide-react`
 
+### Cross-stack boundary (if applicable)
+- [ ] `node scripts/check-boundary-drift.mjs` passes when API, BFF, filters, enums, sort, pagination, env examples, or CI backend URL references changed
+- [ ] `docs/07_api_contracts.md` updated when the raw API payload or BFF normalization contract changed
+
 ---
 
 ## Testing
