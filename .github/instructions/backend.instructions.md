@@ -4,102 +4,52 @@ applyTo: "src/backend/**"
 
 # Backend Coding Instructions (.NET 8 / C#)
 
-These instructions apply to all files under `src/backend/`. Follow them strictly when generating or modifying C# code.
+## Project layout
 
-## Project & Solution Layout
-
-```
-Jobs.Domain/        Pure domain — no NuGet dependencies except the SDK
-Jobs.Infrastructure/ EF Core, connectors (IJobSource), MeiliClient, IngestionPipeline
-Jobs.Api/           ASP.NET Core Minimal API — route handlers in Program.cs only
-Jobs.Worker/        BackgroundService orchestrating IJobSource instances
-Jobs.Tests/         xUnit tests — fixtures at src/backend/tests/fixtures/
+```text
+Jobs.Domain/         Domain model and enums
+Jobs.Infrastructure/ EF Core, ingestion sources, parsers, MeiliClient, IngestionPipeline
+Jobs.Api/            ASP.NET Core Minimal API; routes live in Program.cs
+Jobs.Worker/         BackgroundService orchestrating ingestion
+Jobs.Tests/          xUnit tests; fixtures live in src/backend/tests/fixtures/
 ```
 
-## Language & SDK Rules
+## Rules
 
-- Target `net8.0` in every project.
-- Enable `<Nullable>enable</Nullable>` and `<ImplicitUsings>enable</ImplicitUsings>` in every `.csproj`.
-- Prefer `record` for immutable data transfer objects (e.g., `ParsedSourceJob`).
-- Use `class` for EF Core entities and domain models.
-- Use `sealed` on leaf classes to signal no intended inheritance.
-- Prefer primary constructors (C# 12) for simple DI injection.
-- Never use `var` for `dynamic` or when the type is non-obvious.
+- Target `net8.0`.
+- Use `System.Text.Json` only.
+- Register infrastructure services in `Jobs.Infrastructure/DependencyInjection.cs`.
+- Use strongly typed options in `Jobs.Infrastructure/Options/`.
+- Use `ILogger<T>`; do not use `Console.WriteLine`.
+- All outbound HTTP must use the named `"Sources"` `HttpClient`.
+- Reuse the resilience policies already configured in `DependencyInjection.cs`.
+- `IJobSource` returns `IAsyncEnumerable<JobPosting>` from `FetchAsync(IngestionFetchOptions options, CancellationToken ct)`.
+- `ParsedSourceJob` is only an intermediate parser shape.
+- Build `JobPosting` with its nested value objects (`JobSourceRef`, `CompanyRef`, `LocationRef`, `SalaryRange`, `DedupeInfo`).
+- Use the injected `Fingerprint` service for dedupe data.
+- `Jobs.Api` uses Minimal API in `Program.cs`; do not add MVC controllers or Razor Pages.
+- Schema changes go in `Jobs.Infrastructure/Data/schema.sql`; do not add EF migrations.
 
-## Dependency Injection & Configuration
+## New source decision tree
 
-- Register services in `Jobs.Infrastructure/DependencyInjection.cs` — the single wiring point for infrastructure.
-- Bind options with `services.Configure<TOptions>(config.GetSection("..."))`. Never inject `IConfiguration` directly into business logic.
-- Use strongly-typed options (classes in `Jobs.Infrastructure/Options/`).
-- `Fingerprint` is a singleton — always inject it; never compute SHA-256 inline.
+Before creating a connector:
 
-## HTTP Clients
+1. Check whether the source fits an existing family:
+   - `CorporateCareers`
+   - `JsonLd`
+   - `GupyCompanies`
+   - existing dedicated parsers such as Workday or InfoJobs
+2. Only create a new `IJobSource` when the fetch/parse behavior is materially different.
 
-- ALL outbound HTTP must use the named `"Sources"` `HttpClient` from `IHttpClientFactory`. Never instantiate `HttpClient` directly.
-- Polly retry/backoff is already wired in `DependencyInjection.cs`. Do not add manual `try/catch` for transient HTTP errors.
-- Rate-limiting is controlled via `IngestionFetchOptions` — respect `DelayBetweenRequestsMs`.
+If configuration changes are required:
+- update `AppOptions`
+- keep `appsettings.json` and `appsettings.Development.json` aligned in both `Jobs.Api` and `Jobs.Worker`
 
-## Database (EF Core + PostgreSQL)
+## Boundary review triggers
 
-- Use `JobsDbContext` via DI. Never create it manually.
-- Schema is managed via `Jobs.Infrastructure/Data/schema.sql`. **Do NOT add EF Migrations** — just update `schema.sql` for schema changes and call `EnsureCreatedAsync()` at startup.
-- Use `await db.Database.EnsureCreatedAsync()` on startup in both `Jobs.Api` and `Jobs.Worker`.
-- Use `async`/`await` with `CancellationToken ct` in all EF queries.
-- Prefer `ToListAsync`, `FirstOrDefaultAsync`, `AnyAsync` — never `.Result` or `.Wait()`.
-
-## Logging
-
-- Inject `ILogger<T>` via DI. Never use `Console.WriteLine`.
-- Log at the correct level: `LogDebug` for trace info, `LogInformation` for milestones, `LogWarning` for recoverable errors, `LogError`/`LogCritical` for failures.
-
-## Minimal API (Jobs.Api)
-
-- All route handlers stay in `Program.cs`. No MVC controllers, no Razor Pages, no `[ApiController]`.
-- Use `Results.Ok(...)`, `Results.NotFound()`, etc. from `Microsoft.AspNetCore.Http.Results`.
-- Sanitise and clamp paging params (`page`, `pageSize`) before use.
-- Escape Meilisearch filter values with the existing `EscapeFilterValue` helper.
-
-## IJobSource Pattern — Adding a New Connector
-
-1. Create `src/backend/Jobs.Infrastructure/Ingestion/<Name>JobSource.cs` implementing `IJobSource`.
-2. `Name` property must return a human-readable source name (e.g., `"Gupy"`).
-3. `Enabled` reads from strongly-typed options — never hardcode `true`.
-4. Return `IAsyncEnumerable<ParsedSourceJob>` — do NOT change the interface signature.
-5. Register in `DependencyInjection.cs` with `services.AddScoped<IJobSource, <Name>JobSource>()`.
-6. Add fixture in `src/backend/tests/fixtures/` and a test in `Jobs.Tests/Ingestion/<Name>Tests.cs`.
-7. Add sample payload in `docs/samples/sample_source_<name>.json` (or `.html`).
-
-```csharp
-// Template for a new IJobSource connector
-public sealed class ExampleJobSource(
-    IHttpClientFactory httpFactory,
-    IOptions<AppOptions> options,
-    ILogger<ExampleJobSource> logger) : IJobSource
-{
-    private readonly HttpClient _http = httpFactory.CreateClient("Sources");
-
-    public string Name => "Example";
-    public bool Enabled => options.Value.Sources.Example?.Enabled ?? false;
-
-    public async IAsyncEnumerable<ParsedSourceJob> FetchJobsAsync(
-        IngestionFetchOptions opts,
-        [EnumeratorCancellation] CancellationToken ct)
-    {
-        // fetch → parse → yield ParsedSourceJob
-        yield break;
-    }
-}
-```
-
-## Third-Party Libraries
-
-- Use `System.Text.Json` exclusively — **never** `Newtonsoft.Json`.
-- Use `Polly` (already registered) for resilience — no other retry libraries.
-- Do NOT add new NuGet packages for functionality already provided by the existing stack.
-- Do NOT store secrets in `appsettings.json` — use environment variables or `src/backend/.env`.
-
-## Async & Cancellation
-
-- Every `async` method that performs I/O must accept `CancellationToken ct` as its last parameter.
-- Propagate `ct` to every downstream call (`HttpClient`, EF Core, Task.Delay).
-- Use `[EnumeratorCancellation]` on `CancellationToken` parameters inside `IAsyncEnumerable` methods.
+When changing fields used by search, filters, or API payloads, review these together:
+- `Jobs.Domain/Models/`
+- `Jobs.Infrastructure/Data/Entities/`
+- `Jobs.Infrastructure/Data/Mapping/MappingExtensions.cs`
+- `Jobs.Infrastructure/Search/MeiliClient.cs`
+- `Jobs.Api/Program.cs`

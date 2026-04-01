@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace Jobs.Infrastructure.Ingestion;
@@ -26,9 +27,11 @@ public static class GupyJobsJsonParser
 
         foreach (var obj in EnumerateObjects(root))
         {
-            var id = FirstString(obj, "id", "jobId", "code", "slug");
+            var id = FirstString(obj, "id", "jobId", "code", "slug")
+                  ?? FirstNumericIdAsString(obj, "id", "jobId");
             var title = FirstString(obj, "name", "title", "jobTitle");
-            var url = FirstString(obj, "jobUrl", "url", "absoluteUrl");
+            var url = FirstString(obj, "jobUrl", "url", "absoluteUrl")
+                   ?? (id != null ? SynthesizeJobUrl(baseUri, id) : null);
 
             if (string.IsNullOrWhiteSpace(id) ||
                 string.IsNullOrWhiteSpace(title) ||
@@ -42,7 +45,9 @@ public static class GupyJobsJsonParser
                 SourceJobId: id,
                 Url: absoluteUrl,
                 Title: title.Trim(),
-                LocationText: FirstString(obj, "location", "locationText", "city", "workplace") ?? "",
+                LocationText: FirstString(obj, "location", "locationText", "city")
+                           ?? ExtractWorkplaceLocation(obj)
+                           ?? "",
                 DescriptionText: FirstString(obj, "description", "jobDescription"),
                 PostedAt: FirstDate(obj, "publishedAt", "createdAt", "datePublished")));
         }
@@ -95,6 +100,62 @@ public static class GupyJobsJsonParser
         }
 
         return null;
+    }
+
+    private static string? FirstNumericIdAsString(JsonElement element, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!element.TryGetProperty(key, out var child))
+            {
+                continue;
+            }
+
+            if (child.ValueKind == JsonValueKind.Number && child.TryGetInt64(out var num))
+            {
+                return num.ToString(CultureInfo.InvariantCulture);
+            }
+        }
+
+        return null;
+    }
+
+    private static string? ExtractWorkplaceLocation(JsonElement element)
+    {
+        if (!element.TryGetProperty("workplace", out var workplace) ||
+            workplace.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        if (workplace.TryGetProperty("address", out var address) &&
+            address.ValueKind == JsonValueKind.Object)
+        {
+            var city = FirstString(address, "city");
+            var state = FirstString(address, "stateShortName", "state");
+            var country = FirstString(address, "country");
+
+            var parts = new[] { city, state, country }
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToArray();
+
+            if (parts.Length > 0)
+            {
+                return string.Join(", ", parts);
+            }
+        }
+
+        return FirstString(workplace, "workplaceType");
+    }
+
+    private static string SynthesizeJobUrl(Uri baseUri, string jobId)
+    {
+        var builder = new UriBuilder(baseUri)
+        {
+            Path = "/job/" + jobId,
+            Query = string.Empty
+        };
+        return builder.Uri.ToString();
     }
 
     private static DateTimeOffset? FirstDate(JsonElement element, params string[] keys)

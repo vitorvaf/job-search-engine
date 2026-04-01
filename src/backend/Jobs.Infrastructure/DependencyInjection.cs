@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Jobs.Infrastructure.Data;
 using Jobs.Infrastructure.Ingestion;
 using Jobs.Infrastructure.Options;
@@ -8,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
-using System.Net.Http.Headers;
 
 namespace Jobs.Infrastructure;
 

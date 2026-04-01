@@ -1,6 +1,6 @@
 name: New Job Source
-description: Request or track the addition of a new job board connector.
-title: "[Source] Add <SourceName> connector"
+description: Request or track the addition of a new job source or source-family configuration.
+title: "[Source] Add <SourceName>"
 labels: ["new-source", "enhancement"]
 assignees: []
 
@@ -8,14 +8,15 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this template to propose or track a new `IJobSource` connector.
+        Use this template to propose or track a new job source.
+        Check first whether it fits an existing family such as `CorporateCareers`, `JsonLd`, or `GupyCompanies`.
         Please read `docs/04_ingestion_sources.md` and `docs/PROJECT_RULES.md` before submitting.
 
   - type: input
     id: source-name
     attributes:
       label: Source name
-      description: Human-readable name of the job board (matches the `Name` property of `IJobSource`).
+      description: Human-readable name of the job board or company source.
       placeholder: e.g. Greenhouse
     validations:
       required: true
@@ -33,6 +34,7 @@ body:
     attributes:
       label: Response format
       options:
+        - Existing source family
         - JSON API
         - HTML (scraping)
         - JSON-LD
@@ -41,6 +43,13 @@ body:
         - Other
     validations:
       required: true
+
+  - type: textarea
+    id: fit
+    attributes:
+      label: Existing family fit
+      description: Does this source fit an existing family or parser already present in the repository?
+      placeholder: e.g. Fits GupyCompanies; only needs CompanyBaseUrl and fixtures
 
   - type: textarea
     id: pagination
@@ -62,10 +71,9 @@ body:
     attributes:
       label: Implementation checklist (for the developer picking this up)
       options:
-        - label: "`<Name>JobSource.cs` created in `Jobs.Infrastructure/Ingestion/`"
-        - label: "Registered in `DependencyInjection.cs`"
+        - label: "Existing family reused or a new connector justified explicitly"
+        - label: "Configuration kept aligned in Jobs.Api and Jobs.Worker when needed"
         - label: "Fixture added to `src/backend/tests/fixtures/`"
-        - label: "Sample added to `docs/samples/`"
-        - label: "xUnit test covering happy-path parse added"
-        - label: "Rate limit respected via `IngestionFetchOptions`"
+        - label: "Docs or sample updated when useful"
+        - label: "xUnit coverage added or expanded"
         - label: "Tested with `--run-once --source=<Name>`"

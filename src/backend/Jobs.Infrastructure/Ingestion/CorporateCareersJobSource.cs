@@ -51,6 +51,12 @@ public sealed class CorporateCareersJobSource : IJobSource
         var maxItems = ResolveMaxItems(options);
         var maxDetailFetch = ResolveMaxDetails(options);
 
+        if (RequiresJsSource())
+        {
+            _logger.LogInformation("Fonte {Source} requires JS - skipped", Name);
+            yield break;
+        }
+
         var parsed = JsonLdHtmlParser.ParseJobPostings(listHtml, _source.StartUrl)
             .Take(maxItems)
             .ToList();
@@ -109,12 +115,6 @@ public sealed class CorporateCareersJobSource : IJobSource
                 yield return BuildJob(job, description);
             }
 
-            yield break;
-        }
-
-        if (RequiresJsSource())
-        {
-            _logger.LogInformation("Fonte {Source} requires JS - skipped", Name);
             yield break;
         }
 
@@ -207,7 +207,9 @@ public sealed class CorporateCareersJobSource : IJobSource
         return Name.Contains("thoughtworks", StringComparison.OrdinalIgnoreCase) ||
                Name.Contains("redhat", StringComparison.OrdinalIgnoreCase) ||
                Name.Contains("red hat", StringComparison.OrdinalIgnoreCase) ||
-               Name.Contains("accenture", StringComparison.OrdinalIgnoreCase);
+               Name.Contains("accenture", StringComparison.OrdinalIgnoreCase) ||
+               Name.Contains("totvs", StringComparison.OrdinalIgnoreCase) ||
+               _source.StartUrl.Contains("totvs.app", StringComparison.OrdinalIgnoreCase);
     }
 
     private static IReadOnlyList<string> InferLanguages(string? text)

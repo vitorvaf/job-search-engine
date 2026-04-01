@@ -29,11 +29,12 @@
 - [ ] `JobPosting` domain model unchanged **OR** `JobPostingEntity`, `MappingExtensions`, and Meilisearch index updated
 
 ### New job source (if applicable)
-- [ ] `IJobSource` implemented and registered in `DependencyInjection.cs`
+- [ ] Existing source family reused when possible, or a new `IJobSource` was added intentionally
+- [ ] Configuration kept aligned in `Jobs.Api` and `Jobs.Worker` when applicable
 - [ ] Sample fixture added to `src/backend/tests/fixtures/`
-- [ ] Sample payload added to `docs/samples/`
-- [ ] At least one xUnit test covering the happy-path parse
-- [ ] Rate-limit respected via `IngestionFetchOptions.DelayBetweenRequestsMs`
+- [ ] Docs or sample payload updated when useful
+- [ ] xUnit coverage added or expanded for the affected parser/source
+- [ ] Validated with `--run-once --source=<Name>` when practical
 
 ### Frontend (if applicable)
 - [ ] `npm run build` passes
@@ -42,6 +43,10 @@
 - [ ] Browser components do NOT call `BACKEND_URL` directly — BFF Route Handlers used
 - [ ] Styling via Tailwind utility classes — no inline `style` attributes
 - [ ] No new icon library added — only `lucide-react`
+
+### Cross-stack boundary (if applicable)
+- [ ] `node scripts/check-boundary-drift.mjs` passes when API, BFF, filters, enums, sort, pagination, env examples, or CI backend URL references changed
+- [ ] `docs/07_api_contracts.md` updated when the raw API payload or BFF normalization contract changed
 
 ---
 

@@ -1,44 +1,71 @@
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
-import { type Job, type JobsResponse, type Source } from "@/lib/types";
+import {
+  type ApiJobDetail,
+  type ApiJobListItem,
+  type ApiJobsResponse,
+  type ApiSource,
+  type Job,
+  type JobsResponse,
+  type Source,
+} from "@/lib/types";
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
+}
 
 function safeString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
 function safeArray(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const out = value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
-  return out.length > 0 ? out : undefined;
+  if (Array.isArray(value)) {
+    const out = value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+    return out.length > 0 ? out : undefined;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const out = value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    return out.length > 0 ? out : undefined;
+  }
+
+  return undefined;
 }
 
 function safeNumber(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-export function normalizeJob(raw: unknown): Job {
-  const item = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
-  const companyObj = typeof item.company === "object" && item.company !== null ? (item.company as Record<string, unknown>) : undefined;
-  const sourceObj = typeof item.source === "object" && item.source !== null ? (item.source as Record<string, unknown>) : undefined;
-  const locationObj = typeof item.location === "object" && item.location !== null ? (item.location as Record<string, unknown>) : undefined;
+export function normalizeJob(raw: ApiJobListItem | ApiJobDetail | unknown): Job {
+  const item = asRecord(raw);
+  const companyObj = asRecord(item.company);
+  const sourceObj = asRecord(item.source);
+  const locationObj = asRecord(item.location);
 
   return {
     id: safeString(item.id) ?? "",
     title: safeString(item.title),
-    company: safeString(item.company) ?? safeString(companyObj?.name),
-    location: safeString(item.locationText) ?? safeString(item.location) ?? safeString(locationObj?.city),
+    company: safeString(item.company) ?? safeString(companyObj.name),
+    location:
+      safeString(item.locationText) ??
+      safeString(item.location) ??
+      safeString(locationObj.city) ??
+      safeString(locationObj.state),
     workMode: safeString(item.workMode),
     seniority: safeString(item.seniority),
     employmentType: safeString(item.employmentType),
-    tags: safeArray(item.tags) ?? safeString(item.tags),
+    tags: safeArray(item.tags),
     description: safeString(item.description) ?? safeString(item.descriptionText),
-    applyUrl: safeString(item.applyUrl) ?? safeString(sourceObj?.url),
-    sourceName: safeString(item.sourceName) ?? safeString(sourceObj?.name),
+    applyUrl: safeString(item.applyUrl) ?? safeString(sourceObj.url),
+    sourceName: safeString(item.sourceName) ?? safeString(sourceObj.name),
     postedAt: safeString(item.postedAt),
   };
 }
 
-export function normalizeJobsResponse(raw: unknown, page = 1, pageSize = DEFAULT_PAGE_SIZE): JobsResponse {
-  const data = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
+export function normalizeJobsResponse(raw: ApiJobsResponse | unknown, page = 1, pageSize = DEFAULT_PAGE_SIZE): JobsResponse {
+  const data = asRecord(raw);
 
   let itemsRaw: unknown = data.items;
   let currentPage = safeNumber(data.page, page);
@@ -48,16 +75,14 @@ export function normalizeJobsResponse(raw: unknown, page = 1, pageSize = DEFAULT
 
   if (!Array.isArray(itemsRaw) && Array.isArray(data.data)) {
     itemsRaw = data.data;
-    const meta = typeof data.meta === "object" && data.meta !== null ? (data.meta as Record<string, unknown>) : {};
+    const meta = asRecord(data.meta);
     currentPage = safeNumber(meta.page, page);
     currentPageSize = safeNumber(meta.pageSize, pageSize);
     total = typeof meta.total === "number" ? meta.total : total;
     totalPages = typeof meta.totalPages === "number" ? meta.totalPages : totalPages;
   }
 
-  const items = Array.isArray(itemsRaw)
-    ? itemsRaw.map((item) => normalizeJob(item)).filter((item) => item.id)
-    : [];
+  const items = Array.isArray(itemsRaw) ? itemsRaw.map((item) => normalizeJob(item)).filter((item) => item.id) : [];
 
   return {
     items,
@@ -68,12 +93,12 @@ export function normalizeJobsResponse(raw: unknown, page = 1, pageSize = DEFAULT
   };
 }
 
-export function normalizeSources(raw: unknown): Source[] {
+export function normalizeSources(raw: ApiSource[] | unknown): Source[] {
   if (!Array.isArray(raw)) return [];
 
   return raw
     .map((item): Source | null => {
-      const source = typeof item === "object" && item !== null ? (item as Record<string, unknown>) : {};
+      const source = asRecord(item);
       const name = safeString(source.name);
       if (!name) return null;
 

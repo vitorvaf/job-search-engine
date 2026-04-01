@@ -1,0 +1,51 @@
+{
+  "total": 2000,
+  "jobPostings": [
+    {
+      "title": "Analista Sênior de Processamento de Faturas – Inglês Avançado",
+      "externalPath": "/job/Nova-Lima-Shopping-Alta-Vila/Analista-Snior-de-Processamento-de-Faturas---Ingls-Avanado_R00323033",
+      "postedOn": "Posted Today",
+      "bulletFields": [
+        "R00323033",
+        "Nova Lima, Shopping Alta Vila"
+      ]
+    },
+    {
+      "title": "Assistente de Contas a Pagar",
+      "externalPath": "/job/Nova-Lima-Shopping-Alta-Vila/Analista-de-Contas-a-Pagar-Jnior_R00314098",
+      "postedOn": "Posted Today",
+      "bulletFields": [
+        "R00314098",
+        "Nova Lima, Shopping Alta Vila"
+      ]
+    },
+    {
+      "title": "Deal Structuring & Pricing - Pricing Architect Manager",
+      "externalPath": "/job/Buenos-Aires/Deal-Structuring---Pricing---Pricing-Architect-Senior-Analyst_R00295315-1",
+      "postedOn": "Posted Today",
+      "bulletFields": [
+        "R00295315",
+        "Buenos Aires"
+      ]
+    },
+    {
+      "title": "Store Operations Consultant",
+      "externalPath": "/job/Cairo-CO55-Uvenues/Store-Operations-Consultant_14151875",
+      "postedOn": "Posted Today",
+      "bulletFields": [
+        "14151875",
+        "Cairo, Co55-Uvenues"
+      ]
+    },
+    {
+      "title": "Python & AWS Cloud Engineer",
+      "externalPath": "/job/Cluj-Napoca/Cloud-Engineer_R00292243",
+      "postedOn": "Posted Today",
+      "bulletFields": [
+        "R00292243",
+        "Location Negotiable"
+      ]
+    }
+  ],
+  "userAuthenticated": false
+}

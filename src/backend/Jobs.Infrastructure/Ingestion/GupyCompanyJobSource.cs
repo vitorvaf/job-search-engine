@@ -1,7 +1,7 @@
+using System.Text.RegularExpressions;
 using Jobs.Domain.Models;
 using Jobs.Infrastructure.Options;
 using Microsoft.Extensions.Logging;
-using System.Text.RegularExpressions;
 
 namespace Jobs.Infrastructure.Ingestion;
 

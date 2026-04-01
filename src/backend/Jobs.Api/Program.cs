@@ -1,11 +1,11 @@
-using Jobs.Infrastructure;
+using System.Text.Json;
 using Jobs.Domain.Models;
+using Jobs.Infrastructure;
 using Jobs.Infrastructure.Data;
 using Jobs.Infrastructure.Options;
 using Jobs.Infrastructure.Search;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +48,10 @@ app.MapGet("/api/sources", async (JobsDbContext db, CancellationToken ct) =>
 app.MapGet("/api/jobs/{id:guid}", async (Guid id, JobsDbContext db, CancellationToken ct) =>
 {
     var job = await db.JobPostings.FirstOrDefaultAsync(x => x.Id == id, ct);
-    if (job is null) return Results.NotFound();
+    if (job is null)
+    {
+        return Results.NotFound();
+    }
 
     var metadata = TryParseJson(job.MetadataJson);
 

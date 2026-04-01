@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
+import { normalizeEmploymentTypeValue, normalizeSortValue } from "@/lib/utils";
 
 const TEXT_QUERY_KEYS = [
   "q",
@@ -42,6 +43,13 @@ function sanitizePostedFrom(value: string | null) {
   return parsed.toISOString();
 }
 
+function normalizeQueryValue(key: (typeof TEXT_QUERY_KEYS)[number], value: string | null) {
+  if (key === "postedFrom") return sanitizePostedFrom(value);
+  if (key === "employmentType") return normalizeEmploymentTypeValue(value);
+  if (key === "sort") return normalizeSortValue(value);
+  return sanitizeText(value, 200);
+}
+
 export function buildJobsQueryParams(request: NextRequest) {
   const source = request.nextUrl.searchParams;
   const query = new URLSearchParams();
@@ -53,8 +61,7 @@ export function buildJobsQueryParams(request: NextRequest) {
   query.set("pageSize", String(pageSize));
 
   TEXT_QUERY_KEYS.forEach((key) => {
-    const raw = source.get(key);
-    const value = key === "postedFrom" ? sanitizePostedFrom(raw) : sanitizeText(raw, 200);
+    const value = normalizeQueryValue(key, source.get(key));
     if (!value) return;
     query.set(key, value);
   });
