@@ -34,8 +34,11 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore src/backend/Jobs.sln
 
+      - name: Check formatting
+        run: dotnet format src/backend/Jobs.sln --verify-no-changes --no-restore
+
       - name: Build (Release)
-        run: dotnet build src/backend/Jobs.sln --configuration Release --no-restore
+        run: dotnet build src/backend/Jobs.sln --configuration Release --no-restore --warnaserror
 
       - name: Run unit tests
         run: |
@@ -86,4 +89,4 @@ jobs:
         env:
           # Provide a dummy URL so the build does not fail on missing env var.
           # Real secrets must be set via GitHub Environment secrets for deployments.
-          BACKEND_URL: http://localhost:5000
+          BACKEND_URL: http://localhost:5004

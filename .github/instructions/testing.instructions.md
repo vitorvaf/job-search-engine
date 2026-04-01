@@ -1,112 +1,33 @@
 ---
-applyTo: "src/backend/Jobs.Tests/**"
+applyTo: "src/backend/Jobs.Tests/**,src/backend/tests/fixtures/**"
 ---
 
 # Testing Instructions (xUnit / .NET 8)
 
-These instructions apply to all files under `src/backend/Jobs.Tests/`. Follow them when generating, modifying, or reviewing test code.
+## Current test strategy
 
-## Framework & Tooling
+- Backend tests use xUnit.
+- The repository currently has the strongest automated coverage around:
+  - parsers
+  - text normalization
+  - dedupe fingerprinting
+  - fixture-based validation tests with captured source payloads
+- Fixtures live in `src/backend/tests/fixtures/` and are copied by `Jobs.Tests.csproj`.
+- There is no established suite yet for API, worker, pipeline, BFF, or frontend unit/e2e tests.
 
-- Test framework: **xUnit v2** — no MSTest, NUnit, or FluentAssertions.
-- Coverage: **coverlet** (`<PackageReference Include="coverlet.collector" ...>`) — already in `Jobs.Tests.csproj`.
-- No Moq or other mocking frameworks — test against real implementations or minimal manual stubs.
+## Rules
 
-## Test Class Naming
+- Use xUnit only.
+- Do not add Moq or another mocking framework unless there is no simpler alternative.
+- Follow the nearby test naming style; the repo mixes `Should...` and `<Subject>_<Scenario>_<ExpectedResult>`.
+- Use Arrange / Act / Assert formatting.
+- Prefer specific assertions over broad `Assert.True(...)` checks when a stronger assertion exists.
+- Load fixtures from `Path.Combine("fixtures", "...")` or `Path.Combine(AppContext.BaseDirectory, "fixtures", "...")`, matching surrounding tests.
+- Do not make real HTTP, database, or external service calls in the test suite.
 
-```
-<SubjectClass>Tests
-```
+## Source and parser changes
 
-Namespace: `Jobs.Tests.Ingestion` (even for non-ingestion tests, keep the pattern consistent with existing tests).
-
-Examples: `InfoJobsHtmlParserTests`, `FingerprintTests`, `JobTextNormalizerTests`.
-
-## Test Method Naming
-
-```
-<MethodUnderTest>_<Scenario>_<ExpectedResult>
-```
-
-Examples:
-- `Parse_ValidHtml_ReturnsExpectedJobs`
-- `Compute_SameInputTwice_ReturnsSameFingerprint`
-- `Normalise_NullTitle_ReturnsEmpty`
-
-## Fixtures
-
-- All HTML/JSON test data lives in `src/backend/tests/fixtures/`.
-- Fixtures are declared as `<Content>` in `Jobs.Tests.csproj` and copied to output via `CopyToOutputDirectory = PreserveNewest`.
-- Load fixtures in tests with:
-
-```csharp
-var html = File.ReadAllText(Path.Combine("fixtures", "infojobs_list.html"));
-```
-
-- **Never** hardcode large HTML/JSON strings inline — always use a fixture file.
-- Fixture file naming: `<source>_<variant>.html|json` (e.g., `gupy_company_jobs.json`, `infojobs_detail.html`).
-
-## Test Structure
-
-Use the **Arrange / Act / Assert** pattern, with clear blank-line separation:
-
-```csharp
-[Fact]
-public void Parse_ValidHtml_ReturnsExpectedTitle()
-{
-    // Arrange
-    var html = File.ReadAllText(Path.Combine("fixtures", "infojobs_list.html"));
-    var parser = new InfoJobsHtmlParser();
-
-    // Act
-    var jobs = parser.Parse(html).ToList();
-
-    // Assert
-    Assert.NotEmpty(jobs);
-    Assert.Equal("Desenvolvedor .NET", jobs[0].Title);
-}
-```
-
-- **`[Fact]`** for single scenario tests.
-- **`[Theory]` + `[InlineData]`** for parameterised tests.
-- No `[ClassFixture]` unless shared, expensive setup is truly necessary.
-
-## Async Tests
-
-```csharp
-[Fact]
-public async Task FetchJobsAsync_ValidFixture_YieldsAtLeastOneJob()
-{
-    // Arrange
-    var source = new JsonFixtureJobSource(...);
-
-    // Act
-    var jobs = await source.FetchJobsAsync(new IngestionFetchOptions(), CancellationToken.None)
-                           .ToListAsync();
-
-    // Assert
-    Assert.NotEmpty(jobs);
-}
-```
-
-Always pass `CancellationToken.None` in tests — do NOT create real timeouts.
-
-## Scope Rules
-
-- **Unit tests only** — no integration tests against live PostgreSQL, Meilisearch, or external HTTP.
-- Use `JsonFixtureJobSource` to test the full ingestion pipeline without live infrastructure.
-- If you need a DB, use an in-memory or SQLite stub — never `docker-compose` or real Postgres.
-
-## Coverage Expectations (per `docs/PROJECT_RULES.md`)
-
-Every new `IJobSource` connector must have at minimum:
-1. A fixture file representing a real (anonymised) API/HTML response.
-2. A `Parse_ValidFixture_ReturnsExpectedJobs` test covering the happy path.
-3. Optional: edge-case tests for empty results, missing fields, malformed input.
-
-## What NOT to Write
-
-- Do NOT test EF Core internals (query generation, migrations) — those are framework responsibilities.
-- Do NOT write tests that make real HTTP calls — use fixtures.
-- Do NOT add `Thread.Sleep` or `Task.Delay` in tests — tests must be deterministic and fast.
-- Do NOT use `Assert.True(condition)` when a more specific assertion exists (`Assert.Equal`, `Assert.Contains`, `Assert.NotNull`, etc.).
+When changing a parser or ingestion source:
+- add or update a fixture under `src/backend/tests/fixtures/`
+- add or expand tests under `src/backend/Jobs.Tests/Ingestion/`
+- if you have a captured real response, consider extending `IngestionSourceValidationTests`

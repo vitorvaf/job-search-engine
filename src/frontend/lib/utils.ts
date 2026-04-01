@@ -1,10 +1,35 @@
 import { type Job, type JobFilters } from "@/lib/types";
-import { DEFAULT_PAGE_SIZE, DEFAULT_SORT, QUERY_PARAM_KEYS } from "@/lib/constants";
+import { DEFAULT_PAGE_SIZE, DEFAULT_SORT, FILTER_OPTIONS, QUERY_PARAM_KEYS } from "@/lib/constants";
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(T.*)?$/;
+const SORT_OPTIONS_BY_KEY = new Map(FILTER_OPTIONS.sort.map((option) => [option.value.toLowerCase(), option.value]));
+const EMPLOYMENT_TYPE_OPTIONS = FILTER_OPTIONS.employmentType.filter((value) => value !== "") as Array<
+  Exclude<(typeof FILTER_OPTIONS.employmentType)[number], "">
+>;
+const EMPLOYMENT_TYPE_OPTIONS_BY_KEY = new Map(
+  EMPLOYMENT_TYPE_OPTIONS.map((value) => [value.toLowerCase(), value]),
+);
+
+EMPLOYMENT_TYPE_OPTIONS_BY_KEY.set("contract", "Contractor");
 
 export function classNames(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
+}
+
+export function normalizeSortValue(value: string | null | undefined): string {
+  if (!value?.trim()) return DEFAULT_SORT;
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "recent") return DEFAULT_SORT;
+
+  return SORT_OPTIONS_BY_KEY.get(normalized) ?? DEFAULT_SORT;
+}
+
+export function normalizeEmploymentTypeValue(value: string | null | undefined): string | undefined {
+  if (!value?.trim()) return undefined;
+
+  const normalized = value.trim().toLowerCase();
+  return EMPLOYMENT_TYPE_OPTIONS_BY_KEY.get(normalized) ?? value.trim();
 }
 
 export function parseFiltersFromSearchParams(searchParams: URLSearchParams): JobFilters {
@@ -18,12 +43,12 @@ export function parseFiltersFromSearchParams(searchParams: URLSearchParams): Job
     tags: searchParams.get("tags") || undefined,
     workMode: searchParams.get("workMode") || undefined,
     seniority: searchParams.get("seniority") || undefined,
-    employmentType: searchParams.get("employmentType") || undefined,
+    employmentType: normalizeEmploymentTypeValue(searchParams.get("employmentType")),
     sourceName: searchParams.get("sourceName") || undefined,
     company: searchParams.get("company") || undefined,
     location: searchParams.get("location") || undefined,
     postedFrom: normalizeIsoDate(searchParams.get("postedFrom")),
-    sort: searchParams.get("sort") || DEFAULT_SORT,
+    sort: normalizeSortValue(searchParams.get("sort")),
   };
 }
 
@@ -65,12 +90,7 @@ export function formatDate(date?: string): string {
 }
 
 export function joinTags(tags?: Job["tags"]): string[] {
-  if (!tags) return [];
-  if (Array.isArray(tags)) return tags.filter(Boolean);
-  return tags
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
+  return tags?.filter(Boolean) ?? [];
 }
 
 export function stripHtml(input: string): string {

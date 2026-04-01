@@ -1,0 +1,90 @@
+{
+  "canonicalUrl": "https://tecnologiagrupocasasbahia.gupy.io/",
+  "jobs": [
+    {
+      "id": 10929709,
+      "title": "Pessoa Coordenadora de Software (Team Leader)",
+      "type": "vacancy_type_effective",
+      "department": "TI / Tecnologia",
+      "workplace": {
+        "address": {
+          "country": "Brasil",
+          "stateShortName": "",
+          "state": "",
+          "city": "",
+          "district": ""
+        },
+        "workplaceType": "remote"
+      },
+      "quickApply": false
+    },
+    {
+      "id": 10977639,
+      "title": "Pessoa Engenheira de Prompts Pleno",
+      "type": "vacancy_type_effective",
+      "department": "TI / Tecnologia",
+      "workplace": {
+        "address": {
+          "country": "Brasil",
+          "stateShortName": "",
+          "state": "",
+          "city": "",
+          "district": ""
+        },
+        "workplaceType": "remote"
+      },
+      "quickApply": false
+    },
+    {
+      "id": 10874965,
+      "title": "Pessoa Engenheira de Software Java Pleno (Alavancas Loja)",
+      "type": "vacancy_type_effective",
+      "department": "TI / Tecnologia",
+      "workplace": {
+        "address": {
+          "country": "Brasil",
+          "stateShortName": "",
+          "state": "",
+          "city": "",
+          "district": ""
+        },
+        "workplaceType": "remote"
+      },
+      "quickApply": false
+    },
+    {
+      "id": 10984842,
+      "title": "Pessoa Engenheira de Software .Net Sênior (E-commerce)",
+      "type": "vacancy_type_effective",
+      "department": "TI / Tecnologia",
+      "workplace": {
+        "address": {
+          "country": "Brasil",
+          "stateShortName": "",
+          "state": "",
+          "city": "",
+          "district": ""
+        },
+        "workplaceType": "remote"
+      },
+      "quickApply": false
+    },
+    {
+      "id": 10811011,
+      "title": "Product Manager Specialist (Produtos Digitais)",
+      "type": "vacancy_type_effective",
+      "department": "Administrativo",
+      "workplace": {
+        "address": {
+          "country": "Brasil",
+          "stateShortName": "SP",
+          "state": "São Paulo",
+          "city": "São Paulo",
+          "district": "Cidade Monções"
+        },
+        "workplaceType": "on-site"
+      },
+      "quickApply": false
+    }
+  ]
+}

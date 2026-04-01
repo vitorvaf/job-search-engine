@@ -1,3 +1,83 @@
+export type ApiJobCompany = {
+  name?: string;
+  website?: string;
+  industry?: string;
+};
+
+export type ApiJobLocation = {
+  country?: string;
+  state?: string;
+  city?: string;
+};
+
+export type ApiJobSource = {
+  name?: string;
+  type?: string;
+  url?: string;
+  sourceJobId?: string;
+};
+
+export type ApiJobSalary = {
+  min?: number | null;
+  max?: number | null;
+  currency?: string;
+  period?: string;
+};
+
+export type ApiJobListItem = {
+  id: string;
+  title?: string;
+  company?: ApiJobCompany | string;
+  locationText?: string;
+  location?: ApiJobLocation | string;
+  workMode?: string;
+  seniority?: string;
+  employmentType?: string;
+  tags?: string[] | string;
+  postedAt?: string;
+  capturedAt?: string;
+  source?: ApiJobSource;
+  sourceName?: string;
+  applyUrl?: string;
+};
+
+export type ApiJobDetail = ApiJobListItem & {
+  salary?: ApiJobSalary | null;
+  descriptionText?: string;
+  description?: string;
+  languages?: string[];
+  lastSeenAt?: string;
+  status?: string;
+  dedupe?: {
+    fingerprint?: string;
+    clusterId?: string | null;
+  };
+  metadata?: unknown;
+};
+
+export type ApiJobsResponse = {
+  items?: ApiJobListItem[];
+  page?: number;
+  pageSize?: number;
+  total?: number;
+  totalPages?: number;
+  data?: ApiJobListItem[];
+  meta?: {
+    page?: number;
+    pageSize?: number;
+    total?: number;
+    totalPages?: number;
+  };
+};
+
+export type ApiSource = {
+  id?: string;
+  name: string;
+  type?: string;
+  baseUrl?: string;
+  enabled?: boolean;
+};
+
 export type Job = {
   id: string;
   title?: string;
@@ -6,7 +86,7 @@ export type Job = {
   workMode?: string;
   seniority?: string;
   employmentType?: string;
-  tags?: string[] | string;
+  tags?: string[];
   description?: string;
   applyUrl?: string;
   sourceName?: string;

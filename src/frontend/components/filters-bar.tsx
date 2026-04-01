@@ -1,6 +1,6 @@
 "use client";
 
-import { FILTER_OPTIONS, PAGE_SIZE_OPTIONS } from "@/lib/constants";
+import { DEFAULT_SORT, FILTER_OPTIONS, PAGE_SIZE_OPTIONS } from "@/lib/constants";
 import { type JobFilters, type Source } from "@/lib/types";
 import { getPostedFromDate } from "@/lib/utils";
 
@@ -134,8 +134,8 @@ export function FiltersBar({ filters, sources, onChange, onClear }: FiltersBarPr
         <label className="block text-sm text-muted">
           Ordenação
           <select
-            value={filters.sort ?? "recent"}
-            onChange={(event) => onChange({ sort: event.target.value || "recent", page: 1 })}
+            value={filters.sort ?? DEFAULT_SORT}
+            onChange={(event) => onChange({ sort: event.target.value || DEFAULT_SORT, page: 1 })}
             className="mt-1 w-full rounded-md border border-line bg-canvas px-3 py-2 text-sm text-ink outline-none transition focus:border-ink"
           >
             {FILTER_OPTIONS.sort.map((option) => (
