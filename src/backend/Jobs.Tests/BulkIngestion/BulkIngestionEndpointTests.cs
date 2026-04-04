@@ -26,7 +26,11 @@ public sealed class BulkIngestionEndpointTests
                 // Replace DbContext with InMemory to avoid requiring a real Postgres connection
                 var dbDescriptor = services.SingleOrDefault(
                     d => d.ServiceType == typeof(DbContextOptions<JobsDbContext>));
-                if (dbDescriptor != null) services.Remove(dbDescriptor);
+                if (dbDescriptor != null)
+                {
+                    services.Remove(dbDescriptor);
+                }
+
                 services.AddDbContext<JobsDbContext>(opt =>
                     opt.UseInMemoryDatabase(Guid.NewGuid().ToString()));
 
@@ -34,7 +38,11 @@ public sealed class BulkIngestionEndpointTests
                 var meiliDescriptors = services
                     .Where(d => d.ServiceType == typeof(MeiliClient))
                     .ToList();
-                foreach (var d in meiliDescriptors) services.Remove(d);
+                foreach (var d in meiliDescriptors)
+                {
+                    services.Remove(d);
+                }
+
                 services.AddSingleton<MeiliClient>(_ =>
                 {
                     var http = new HttpClient(new FakeMeiliHttpMessageHandler());

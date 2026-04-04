@@ -217,7 +217,10 @@ public sealed class BulkJobIngestionService
         {
             var byOrigin = await _db.JobPostings
                 .FirstOrDefaultAsync(x => x.OriginUrl == item.OriginUrl, ct);
-            if (byOrigin is not null) return byOrigin;
+            if (byOrigin is not null)
+            {
+                return byOrigin;
+            }
         }
 
         // Priority 2: sourceJobId (scoped to source)
@@ -228,7 +231,10 @@ public sealed class BulkJobIngestionService
                     x.SourceType == sourceType &&
                     x.SourceName == sourceName &&
                     x.SourceJobId == item.SourceJobId, ct);
-            if (bySourceJobId is not null) return bySourceJobId;
+            if (bySourceJobId is not null)
+            {
+                return bySourceJobId;
+            }
         }
 
         // Priority 3: sourceUrl
@@ -240,7 +246,10 @@ public sealed class BulkJobIngestionService
         {
             var bySourceUrl = await _db.JobPostings
                 .FirstOrDefaultAsync(x => x.SourceUrl == effectiveSourceUrl, ct);
-            if (bySourceUrl is not null) return bySourceUrl;
+            if (bySourceUrl is not null)
+            {
+                return bySourceUrl;
+            }
         }
 
         // Priority 4: fingerprint fallback
@@ -347,13 +356,19 @@ public sealed class BulkJobIngestionService
     private static string? ValidateItem(BulkIngestionItemRequest item)
     {
         if (string.IsNullOrWhiteSpace(item.Title))
+        {
             return "title is required";
+        }
 
         if (item.Company is null || string.IsNullOrWhiteSpace(item.Company.Name))
+        {
             return "company.name is required";
+        }
 
         if (string.IsNullOrWhiteSpace(item.SourceUrl) && string.IsNullOrWhiteSpace(item.OriginUrl))
+        {
             return "sourceUrl or originUrl is required";
+        }
 
         return null;
     }

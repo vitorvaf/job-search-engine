@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text;
 using Jobs.Domain.Models;
 using Jobs.Infrastructure.BulkIngestion;
 using Jobs.Infrastructure.Data;
@@ -7,8 +9,6 @@ using Jobs.Infrastructure.Search;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using System.Net;
-using System.Text;
 
 namespace Jobs.Tests.BulkIngestion;
 
@@ -57,19 +57,19 @@ public sealed class BulkJobIngestionServiceTests
         string company = "Empresa X",
         string? sourceUrl = "https://example.com/job/1",
         string? originUrl = null) => new()
-    {
-        Title = title,
-        Company = new BulkIngestionCompanyRequest { Name = company },
-        SourceUrl = sourceUrl,
-        OriginUrl = originUrl,
-        SourceJobId = null, // Not set by default; tests that need idempotency by sourceJobId set it explicitly
-        LocationText = "São Paulo, SP",
-        WorkMode = "Remote",
-        Seniority = "Mid",
-        EmploymentType = "CLT",
-        DescriptionText = "Descrição completa da vaga com mais de 200 caracteres para garantir que o texto não seja descartado por regras de qualidade de conteúdo.",
-        Tags = new List<string> { "dotnet", "azure" }
-    };
+        {
+            Title = title,
+            Company = new BulkIngestionCompanyRequest { Name = company },
+            SourceUrl = sourceUrl,
+            OriginUrl = originUrl,
+            SourceJobId = null, // Not set by default; tests that need idempotency by sourceJobId set it explicitly
+            LocationText = "São Paulo, SP",
+            WorkMode = "Remote",
+            Seniority = "Mid",
+            EmploymentType = "CLT",
+            DescriptionText = "Descrição completa da vaga com mais de 200 caracteres para garantir que o texto não seja descartado por regras de qualidade de conteúdo.",
+            Tags = new List<string> { "dotnet", "azure" }
+        };
 
     private static BulkIngestionRequest MakeRequest(params BulkIngestionItemRequest[] items) => new()
     {
