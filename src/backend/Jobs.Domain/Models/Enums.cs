@@ -18,5 +18,6 @@ public enum SourceType
     Workday = 11,
     InfoJobs = 6,
     Vagas = 7,
-    Fixture = 100
+    Fixture = 100,
+    ExternalIngestion = 50
 }

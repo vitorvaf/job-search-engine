@@ -14,6 +14,11 @@ public sealed class IngestionOptions
     public int MaxItemsPerRunDefault { get; set; } = 20;
     public int MaxDetailFetchDefault { get; set; } = 20;
     public int ExpireAfterDays { get; set; } = 14;
+    /// <summary>
+    /// Optional API key for external ingestion endpoint (X-Ingestion-Key header).
+    /// If null/empty, the endpoint is open (suitable for dev environments only).
+    /// </summary>
+    public string? ApiKey { get; set; }
 }
 
 public sealed class HttpSourceOptions

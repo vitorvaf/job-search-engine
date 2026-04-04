@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Jobs.Domain.Models;
 using Jobs.Infrastructure;
+using Jobs.Infrastructure.BulkIngestion;
 using Jobs.Infrastructure.Data;
 using Jobs.Infrastructure.Options;
 using Jobs.Infrastructure.Search;
@@ -204,6 +205,43 @@ app.MapGet("/api/jobs", async (
     });
 });
 
+app.MapPost("/api/ingestion/jobs/bulk", async (
+    BulkIngestionRequest request,
+    BulkJobIngestionService ingestionService,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    // Security: validate X-Ingestion-Key header when a key is configured
+    var providedKey = httpContext.Request.Headers["X-Ingestion-Key"].FirstOrDefault();
+    if (!ingestionService.IsApiKeyValid(providedKey))
+    {
+        return Results.Problem(
+            title: "Unauthorized",
+            detail: "X-Ingestion-Key header is missing or invalid.",
+            statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    // Validate batch size
+    if (request.Items is null || request.Items.Count == 0)
+    {
+        return Results.Problem(
+            title: "Bad Request",
+            detail: "items must contain at least 1 item.",
+            statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    if (request.Items.Count > 100)
+    {
+        return Results.Problem(
+            title: "Bad Request",
+            detail: $"Batch size exceeds maximum allowed (100). Received {request.Items.Count} items.",
+            statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    var response = await ingestionService.ProcessAsync(request, ct);
+    return Results.Ok(response);
+});
+
 app.Run();
 
 static string[] ResolveSort(string? sort)
@@ -252,3 +290,5 @@ static string EscapeFilterValue(string value)
     return value.Replace("\\", "\\\\", StringComparison.Ordinal)
         .Replace("\"", "\\\"", StringComparison.Ordinal);
 }
+
+public partial class Program { }

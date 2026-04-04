@@ -42,6 +42,7 @@ dotnet run --project src/backend/Jobs.Worker -- --run-once --source=InfoJobs
 - `GET /api/jobs`
 - `GET /api/jobs/{id}`
 - `GET /api/sources`
+- `POST /api/ingestion/jobs/bulk`
 
 ## Frontend (Next.js + BFF)
 
@@ -94,6 +95,79 @@ curl "http://localhost:3000/api/jobs/00000000-0000-0000-0000-000000000000"
 Fontes:
 ```bash
 curl "http://localhost:3000/api/sources"
+```
+
+## Ingestão BULK (sistemas externos)
+
+O endpoint `POST /api/ingestion/jobs/bulk` permite que sistemas externos (n8n, Firecrawl, conectores) enviem lotes de vagas para a API.
+
+### Exemplo de request
+
+```bash
+curl -X POST http://localhost:5004/api/ingestion/jobs/bulk \
+  -H "Content-Type: application/json" \
+  -H "X-Ingestion-Key: sua-chave-aqui" \
+  -d '{
+    "sourceName": "Firecrawl",
+    "sourceType": "ExternalIngestion",
+    "items": [
+      {
+        "sourceJobId": "123",
+        "sourceUrl": "https://example.com/job/123",
+        "originUrl": "https://company.com/careers/job/123",
+        "title": "Backend Developer",
+        "company": {
+          "name": "Empresa X",
+          "website": "https://empresa.com"
+        },
+        "locationText": "São Paulo, SP",
+        "workMode": "Remote",
+        "seniority": "Mid",
+        "employmentType": "CLT",
+        "descriptionText": "Descrição da vaga...",
+        "tags": ["dotnet", "azure"],
+        "languages": ["pt-BR"],
+        "postedAt": "2026-04-04T10:00:00Z",
+        "metadata": { "crawler": "firecrawl", "rawSource": "accenture" }
+      }
+    ]
+  }'
+```
+
+### Resposta
+
+```json
+{
+  "received": 1,
+  "processed": 1,
+  "inserted": 1,
+  "updated": 0,
+  "duplicates": 0,
+  "invalid": 0,
+  "errors": []
+}
+```
+
+### Regras principais
+
+- Máximo de 100 itens por request
+- Campos obrigatórios por item: `title`, `company.name`, `sourceUrl` **ou** `originUrl`
+- Itens inválidos não derrubam o lote — são reportados em `errors[]`
+- Idempotência por `originUrl` → `sourceJobId` → `sourceUrl` → fingerprint
+- Campos enriquecidos progressivamente (descrição maior, merge de tags, etc.)
+
+### Segurança (opcional)
+
+Configure `App:Ingestion:ApiKey` no `appsettings.json` para exigir o header `X-Ingestion-Key`. Se não configurado, o endpoint fica aberto (adequado somente para dev):
+
+```json
+{
+  "App": {
+    "Ingestion": {
+      "ApiKey": "sua-chave-secreta"
+    }
+  }
+}
 ```
 
 ## Rotas da interface
