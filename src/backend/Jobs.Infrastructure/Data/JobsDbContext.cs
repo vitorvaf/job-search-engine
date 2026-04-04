@@ -36,6 +36,10 @@ public sealed class JobsDbContext : DbContext
             e.Property(x => x.ClusterId).HasMaxLength(80);
             e.Property(x => x.MetadataJson).HasColumnType("jsonb").IsRequired();
 
+            // OriginUrl: URL canônica da vaga na empresa (usada como chave de idempotência principal para ingestão externa)
+            // Para bancos existentes, executar: ALTER TABLE job_postings ADD COLUMN IF NOT EXISTS origin_url VARCHAR(1024);
+            e.Property(x => x.OriginUrl).HasMaxLength(1024);
+
             e.Property(x => x.Tags).HasColumnType("text[]");
             e.Property(x => x.Languages).HasColumnType("text[]");
 
@@ -43,6 +47,10 @@ public sealed class JobsDbContext : DbContext
             e.HasIndex(x => x.SourceUrl)
                 .IsUnique()
                 .HasFilter("\"source_url\" IS NOT NULL AND \"source_url\" <> ''");
+
+            e.HasIndex(x => x.OriginUrl)
+                .IsUnique()
+                .HasFilter("\"origin_url\" IS NOT NULL AND \"origin_url\" <> ''");
 
             // Evita duplicar a mesma vaga na mesma fonte (se SourceJobId existir)
             e.HasIndex(x => new { x.SourceType, x.SourceName, x.SourceJobId })

@@ -1,0 +1,28 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+# Disable telemetry and first-run experience for faster startup
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
+ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
+
+# Use polling watcher so inotify limits inside containers don't block hot reload
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+
+# Suppress the browser-refresh SSE endpoint injected by dotnet-watch
+ENV DOTNET_WATCH_SUPPRESS_BROWSER_REFRESH=1
+
+WORKDIR /workspace
+
+# Copy only project/solution files first so the restore layer is cached separately
+# from source changes. The full src/ tree is mounted as a volume at runtime.
+COPY src/backend/Jobs.sln                                     src/backend/Jobs.sln
+COPY src/backend/Jobs.Domain/Jobs.Domain.csproj               src/backend/Jobs.Domain/
+COPY src/backend/Jobs.Infrastructure/Jobs.Infrastructure.csproj src/backend/Jobs.Infrastructure/
+COPY src/backend/Jobs.Api/Jobs.Api.csproj                     src/backend/Jobs.Api/
+COPY src/backend/Jobs.Worker/Jobs.Worker.csproj               src/backend/Jobs.Worker/
+COPY src/backend/Jobs.Tests/Jobs.Tests.csproj                 src/backend/Jobs.Tests/
+
+RUN dotnet restore src/backend/Jobs.sln
+
+WORKDIR /workspace/src/backend
+
+CMD ["dotnet", "watch", "--non-interactive", "--project", "Jobs.Api", "run", "--no-launch-profile"]

@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using Jobs.Infrastructure.BulkIngestion;
 using Jobs.Infrastructure.Data;
 using Jobs.Infrastructure.Ingestion;
 using Jobs.Infrastructure.Options;
@@ -55,6 +56,7 @@ public static class DependencyInjection
 
         services.AddSingleton<Fingerprint>();
         services.AddScoped<IngestionPipeline>();
+        services.AddScoped<BulkJobIngestionService>();
 
         // Fontes MVP
         services.AddScoped<IJobSource, InfoJobsJobSource>();

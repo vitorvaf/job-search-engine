@@ -36,7 +36,7 @@ services:
     volumes:
       - meili_data:/meili_data
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7700/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:7700/health"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -55,7 +55,67 @@ services:
       timeout: 3s
       retries: 20
 
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api.dev
+    container_name: jobs_api
+    command: ["dotnet", "watch", "--non-interactive", "--project", "Jobs.Api", "run", "--no-launch-profile"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5004
+      ConnectionStrings__JobsDb: Host=postgres;Port=5432;Database=${POSTGRES_DB:-jobs};Username=${POSTGRES_USER:-jobs};Password=${POSTGRES_PASSWORD:-jobs}
+      Meilisearch__BaseUrl: http://meilisearch:7700
+      Meilisearch__MasterKey: ${MEILI_MASTER_KEY:-dev_master_key_change_me}
+    volumes:
+      - ./src:/workspace/src
+    ports:
+      - "5004:5004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker.dev
+    container_name: jobs_worker
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__JobsDb: Host=postgres;Port=5432;Database=${POSTGRES_DB:-jobs};Username=${POSTGRES_USER:-jobs};Password=${POSTGRES_PASSWORD:-jobs}
+      Meilisearch__BaseUrl: http://meilisearch:7700
+      Meilisearch__MasterKey: ${MEILI_MASTER_KEY:-dev_master_key_change_me}
+    volumes:
+      - ./src:/workspace/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend.dev
+    container_name: jobs_frontend
+    environment:
+      BACKEND_URL: http://api:5004
+      # Enable file-change polling so hot reload works inside the container
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./src/frontend:/app
+      # Preserve the node_modules installed at image-build time;
+      # the bind mount above must not overwrite them.
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
 volumes:
   pg_data:
   meili_data:
   redis_data:
+  frontend_node_modules:

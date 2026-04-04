@@ -30,6 +30,8 @@ public sealed class JobPostingEntity
     public string? SalaryCurrency { get; set; }
     public string? SalaryPeriod { get; set; }
 
+    public string? OriginUrl { get; set; }
+
     public string DescriptionText { get; set; } = "";
 
     public string[] Tags { get; set; } = Array.Empty<string>();
