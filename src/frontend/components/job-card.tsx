@@ -38,8 +38,8 @@ export function JobCard({ job }: JobCardProps) {
         <div className="mt-4 flex flex-wrap gap-2">
           {[job.workMode, job.seniority, job.employmentType, job.sourceName]
             .filter((value): value is string => Boolean(value))
-            .map((meta) => (
-              <TagPill key={meta} label={meta} />
+            .map((meta, i) => (
+              <TagPill key={`${meta}-${i}`} label={meta} />
             ))}
           {tags.map((tag) => (
             <TagPill key={tag} label={`#${tag}`} />

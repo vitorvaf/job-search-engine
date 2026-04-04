@@ -1,0 +1,18 @@
+.git
+.github
+.claude
+docs
+scripts
+
+# .NET build outputs (mounted at runtime via volume, not baked into image)
+src/backend/**/bin/
+src/backend/**/obj/
+
+# Frontend build outputs and runtime deps
+src/frontend/.next/
+src/frontend/node_modules/
+
+# Local env overrides
+.env
+src/frontend/.env.local
+src/backend/.env
