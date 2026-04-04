@@ -5,6 +5,7 @@ using Jobs.Infrastructure.BulkIngestion;
 using Jobs.Infrastructure.Data;
 using Jobs.Infrastructure.Options;
 using Jobs.Infrastructure.Search;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -21,14 +22,27 @@ public sealed class BulkIngestionEndpointTests
     {
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
+            builder.UseEnvironment("Test");
             builder.ConfigureTestServices(services =>
             {
-                // Replace DbContext with InMemory to avoid requiring a real Postgres connection
-                var dbDescriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<JobsDbContext>));
-                if (dbDescriptor != null)
+                // Remove ALL EF Core descriptors for JobsDbContext:
+                // EF Core 8 uses IDbContextOptionsConfiguration<T> (accumulated via Add, not TryAdd),
+                // so we must remove those too to prevent Npgsql + InMemory from both being active.
+                var descriptorsToRemove = services
+                    .Where(d =>
+                        d.ServiceType == typeof(DbContextOptions<JobsDbContext>) ||
+                        d.ServiceType == typeof(JobsDbContext) ||
+                        (d.ServiceType.IsGenericType &&
+                         d.ServiceType.Name.StartsWith(
+                             "IDbContextOptionsConfiguration",
+                             StringComparison.Ordinal) &&
+                         d.ServiceType.GenericTypeArguments.Length == 1 &&
+                         d.ServiceType.GenericTypeArguments[0] == typeof(JobsDbContext)))
+                    .ToList();
+
+                foreach (var d in descriptorsToRemove)
                 {
-                    services.Remove(dbDescriptor);
+                    services.Remove(d);
                 }
 
                 services.AddDbContext<JobsDbContext>(opt =>
