@@ -1,0 +1,69 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Keep project guidance short at load time and route deeper rules through AGENTS.md.
+  "instructions": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/PROJECT_RULES.md"
+  ],
+
+  "default_agent": "build",
+  "snapshot": false,
+  "share": "manual",
+
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 12000
+  },
+
+  "watcher": {
+    "ignore": [
+      ".git/**",
+      "**/node_modules/**",
+      "**/.next/**",
+      "**/bin/**",
+      "**/obj/**",
+      "**/coverage/**",
+      "**/artifacts/**",
+      "**/TestResults/**",
+      "**/.turbo/**",
+      "**/.cache/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/logs/**",
+      "**/tmp/**",
+      "**/temp/**",
+      "**/*.log",
+      "**/*.tmp"
+    ]
+  },
+
+  "permission": {
+    "edit": "ask",
+    "webfetch": "ask",
+    "bash": {
+      "*": "ask",
+      "pwd": "allow",
+      "ls*": "allow",
+      "rg*": "allow",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git show*": "allow",
+      "git branch*": "allow",
+      "dotnet build *": "allow",
+      "dotnet test *": "allow",
+      "node scripts/check-boundary-drift.mjs*": "allow",
+      "npm run lint*": "allow",
+      "npm run build*": "allow",
+      "docker compose ps*": "allow",
+      "rm -rf *": "deny",
+      "git reset --hard*": "deny",
+      "git checkout -- *": "deny",
+      "git clean -fd*": "deny",
+      "git push --force*": "deny"
+    }
+  }
+}
