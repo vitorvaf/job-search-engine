@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS job_postings (
     status integer NOT NULL,
     fingerprint varchar(80) NOT NULL,
     cluster_id varchar(80),
+    origin_url varchar(1024),
     metadata_json jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 
@@ -71,3 +72,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_job_postings_source_name_job_id
 CREATE UNIQUE INDEX IF NOT EXISTS ux_job_postings_source_url
     ON job_postings (source_url)
     WHERE source_url IS NOT NULL AND source_url <> '';
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_job_postings_origin_url
+    ON job_postings (origin_url)
+    WHERE origin_url IS NOT NULL AND origin_url <> '';
