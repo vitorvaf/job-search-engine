@@ -1,294 +1,220 @@
-# Job Search Engine
+<div align="center">
 
-Projeto com backend .NET (ingestão + API) e frontend Next.js minimalista para navegação de vagas.
+# 🔍 Job Search Engine
 
-## Backend
+### Um motor open source para descoberta e distribuição inteligente de vagas de tecnologia
 
-### 1. Infra local
+[![Build](https://img.shields.io/github/actions/workflow/status/vitorvaf/job-search-engine/ci.yml?branch=main&label=build&style=flat-square)](https://github.com/vitorvaf/job-search-engine/actions)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=flat-square)](https://dotnet.microsoft.com)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
+
+**Agregue vagas de múltiplas fontes, normalize, deduplique e distribua — onde e como quiser.**
+
+[Como começar](#-como-começar) · [Funcionalidades](#-funcionalidades) · [Arquitetura](#-arquitetura) · [Contribuir](#-contribuindo)
+
+</div>
+
+---
+
+## O problema que resolvemos
+
+Se você já perdeu uma boa oportunidade porque ela estava enterrada na página 5 de um site de vagas, ou recebeu a mesma vaga cinco vezes em canais diferentes, você entende o problema.
+
+Vagas de tecnologia estão espalhadas por dezenas de plataformas — sites corporativos, ATSs como Gupy e Workday, agregadores genéricos. Cada uma com seu formato, sua estrutura, seu ruído. Não existe um lugar centralizado, limpo e customizável que funcione do jeito que desenvolvedores querem.
+
+**Este projeto existe para mudar isso.**
+
+---
+
+## A solução
+
+Job Search Engine é uma plataforma open source que:
+
+- **Coleta** vagas automaticamente de múltiplas fontes em segundo plano
+- **Normaliza** tudo em um modelo de domínio padronizado — mesmos campos, mesmos enums, mesma estrutura
+- **Deduplica** usando fingerprinting inteligente, eliminando a mesma vaga que aparece em cinco lugares diferentes
+- **Indexa** no Meilisearch para buscas rápidas e relevantes
+- **Expõe** uma API REST que você usa como quiser: site, bot, integração, o que precisar
+
+É a infraestrutura que você precisaria construir do zero — já construída, testada e extensível.
+
+---
+
+## ✨ Funcionalidades
+
+- 🔎 **Coleta automática** de vagas via worker em background
+- 🧩 **Multi-fonte** — conectores para sites corporativos, Gupy, Workday, InfoJobs e mais
+- 🧠 **Normalização inteligente** com suporte a enriquecimento por IA (tags, senioridade)
+- ♻️ **Deduplicação por fingerprint** — sem duplicatas nas buscas
+- ⚡ **Indexação rápida** com Meilisearch (busca full-text, filtros, facets)
+- 🔗 **API REST centralizada** pronta para consumo
+- 📥 **Endpoint de ingestão bulk** para integração com n8n, Firecrawl e automações externas
+- 🤖 **Distribuição extensível** — arquitetado para bots Telegram, WhatsApp e outros canais
+- 🖥️ **Frontend incluído** — Next.js com busca, filtros, paginação e detalhe da vaga
+- 🛡️ **BFF seguro** — o browser nunca chama o backend diretamente
+
+---
+
+## Por que isso importa
+
+Plataformas centralizadas de vagas têm incentivos que não são os seus. Elas controlam o algoritmo, o acesso, o formato.
+
+Este projeto coloca o controle de volta nas suas mãos.
+
+### Para desenvolvedores
+
+Você pode montar seu próprio agregador de vagas em stack, nível ou localização que quiser — sem depender de plataformas que não foram feitas para isso. A stack é familiar: .NET 8, Postgres, Next.js, Docker.
+
+### Para comunidades
+
+Quer um bot de vagas no Telegram da sua comunidade de devs? Um feed curado de posições remotas em React? Um site de vagas focado em determinada stack? A infraestrutura está pronta. Você configura as fontes e distribui como quiser.
+
+---
+
+## 🗺️ Arquitetura
+
+O fluxo é direto:
+
+```
+[Fontes externas]
+       ↓
+  Worker (.NET)
+  fetch → parse → normalize → dedupe
+       ↓                ↓
+   PostgreSQL       Meilisearch
+       ↑                ↑
+     Jobs.Api (Minimal API)
+       ↑
+  Next.js BFF (Route Handlers)
+       ↑
+  Browser / Bot / Integração externa
+```
+
+Postgres é a fonte de verdade. Meilisearch é o motor de busca. O worker roda em background e alimenta os dois. A API expõe os dados. O frontend consome a API via BFF server-side — o browser nunca fala diretamente com o backend.
+
+---
+
+## 🚀 Como começar
+
+Você precisa de: Docker, .NET 8 SDK e Node.js 20+.
+
 ```bash
+# 1. Clone o repositório
+git clone https://github.com/vitorvaf/job-search-engine.git
+cd job-search-engine
+
+# 2. Suba a infra (Postgres, Meilisearch, Redis)
 cp .env.example .env
 docker compose up -d
-```
 
-O arquivo `.env` na raiz é opcional: `docker-compose.yaml` já possui defaults equivalentes.
-
-Serviços esperados:
-- Postgres: `localhost:5432`
-- Meilisearch: `http://localhost:7700`
-- Redis: `localhost:6379`
-- Adminer: `http://localhost:8080`
-
-### 2. Rodar API
-```bash
+# 3. Rode a API
 dotnet run --project src/backend/Jobs.Api
-```
+# → http://localhost:5004 | Swagger: http://localhost:5004/swagger
 
-API disponível em `http://localhost:5004`.
-
-Em ambiente `Development`, o Swagger fica em `http://localhost:5004/swagger`.
-
-### 3. Rodar Worker
-Execução contínua:
-```bash
-dotnet run --project src/backend/Jobs.Worker
-```
-
-Execução única de uma fonte:
-```bash
+# 4. Rode o worker (ingestão única para testar)
 dotnet run --project src/backend/Jobs.Worker -- --run-once --source=InfoJobs
-```
 
-### 4. Endpoints principais
-- `GET /api/jobs`
-- `GET /api/jobs/{id}`
-- `GET /api/sources`
-- `POST /api/ingestion/jobs/bulk`
-
-## Frontend (Next.js + BFF)
-
-### 1. Variáveis
-```bash
+# 5. Rode o frontend
 cp src/frontend/.env.local.example src/frontend/.env.local
+cd src/frontend && npm install && npm run dev
+# → http://localhost:3000
 ```
 
-Valor padrão:
-```env
-BACKEND_URL=http://localhost:5004
-```
+Pronto. Você tem um motor de busca de vagas rodando localmente.
 
-`BACKEND_URL` é usado apenas pelo BFF server-side do Next.js.
+---
 
-### 2. Instalar e executar
-```bash
-cd src/frontend
-npm install
-npm run dev
-```
+## 🔌 Integração via API
 
-Frontend disponível em `http://localhost:3000`.
+A API expõe os endpoints principais:
 
-## BFF interno (Next Route Handlers)
+| Endpoint | Descrição |
+|----------|-----------|
+| `GET /api/jobs` | Listagem com busca, filtros e paginação |
+| `GET /api/jobs/{id}` | Detalhe da vaga |
+| `GET /api/sources` | Fontes ativas |
+| `POST /api/ingestion/jobs/bulk` | Ingestão externa (n8n, Firecrawl, etc.) |
 
-O frontend não chama o backend diretamente no browser. As chamadas passam por:
-- `GET /api/jobs`
-- `GET /api/jobs/[id]`
-- `GET /api/sources`
-
-Essas rotas:
-- validam e saneiam query params
-- chamam `Jobs.Api` via `src/frontend/lib/api-proxy.ts`
-- normalizam o payload em `src/frontend/lib/normalizers.ts`
-- entregam ao UI o modelo do frontend definido em `src/frontend/lib/types.ts`
-
-## Exemplo de consultas
-
-Lista paginada com filtros:
-```bash
-curl "http://localhost:3000/api/jobs?page=1&pageSize=20&q=react&workMode=Remote&tags=react,nextjs&sort=postedAt:desc"
-```
-
-Detalhe:
-```bash
-curl "http://localhost:3000/api/jobs/00000000-0000-0000-0000-000000000000"
-```
-
-Fontes:
-```bash
-curl "http://localhost:3000/api/sources"
-```
-
-## Ingestão BULK (sistemas externos)
-
-O endpoint `POST /api/ingestion/jobs/bulk` permite que sistemas externos (n8n, Firecrawl, conectores) enviem lotes de vagas para a API.
-
-### Exemplo de request
+Exemplo de busca:
 
 ```bash
-curl -X POST http://localhost:5004/api/ingestion/jobs/bulk \
-  -H "Content-Type: application/json" \
-  -H "X-Ingestion-Key: sua-chave-aqui" \
-  -d '{
-    "sourceName": "Firecrawl",
-    "sourceType": "ExternalIngestion",
-    "items": [
-      {
-        "sourceJobId": "123",
-        "sourceUrl": "https://example.com/job/123",
-        "originUrl": "https://company.com/careers/job/123",
-        "title": "Backend Developer",
-        "company": {
-          "name": "Empresa X",
-          "website": "https://empresa.com"
-        },
-        "locationText": "São Paulo, SP",
-        "workMode": "Remote",
-        "seniority": "Mid",
-        "employmentType": "CLT",
-        "descriptionText": "Descrição da vaga...",
-        "tags": ["dotnet", "azure"],
-        "languages": ["pt-BR"],
-        "postedAt": "2026-04-04T10:00:00Z",
-        "metadata": { "crawler": "firecrawl", "rawSource": "accenture" }
-      }
-    ]
-  }'
+curl "http://localhost:3000/api/jobs?q=react&workMode=Remote&tags=react,nextjs&sort=postedAt:desc"
 ```
 
-### Resposta
+O endpoint de ingestão bulk aceita até 100 itens por request, com idempotência e relatório de erros por item — pronto para pipelines externos.
 
-```json
-{
-  "received": 1,
-  "processed": 1,
-  "inserted": 1,
-  "updated": 0,
-  "duplicates": 0,
-  "invalid": 0,
-  "errors": []
-}
-```
+---
 
-### Regras principais
+## 💡 Casos de uso
 
-- Máximo de 100 itens por request
-- Campos obrigatórios por item: `title`, `company.name`, `sourceUrl` **ou** `originUrl`
-- Itens inválidos não derrubam o lote — são reportados em `errors[]`
-- Idempotência por `originUrl` → `sourceJobId` → `sourceUrl` → fingerprint
-- Campos enriquecidos progressivamente (descrição maior, merge de tags, etc.)
+- **Site de vagas personalizado** — filtre por stack, senioridade, modelo de trabalho
+- **Bot de vagas no Telegram** — feed diário ou alertas por categoria
+- **Monitor de oportunidades** — acompanhe vagas em .NET, React, DevOps sem ruído
+- **Agregador para comunidades tech** — dê à sua comunidade um feed curado e limpo
+- **Infraestrutura interna** — centralize vagas relevantes para um time de recrutamento
 
-### Segurança (opcional)
+---
 
-Configure `App:Ingestion:ApiKey` no `appsettings.json` para exigir o header `X-Ingestion-Key`. Se não configurado, o endpoint fica aberto (adequado somente para dev):
+## 🛣️ Roadmap
 
-```json
-{
-  "App": {
-    "Ingestion": {
-      "ApiKey": "sua-chave-secreta"
-    }
-  }
-}
-```
+| Status | Item |
+|--------|------|
+| ✅ | Ingestão multi-fonte (InfoJobs, Gupy, Workday, sites corporativos) |
+| ✅ | Deduplicação por fingerprint |
+| ✅ | API REST + Swagger |
+| ✅ | Frontend com busca, filtros e paginação |
+| ✅ | Endpoint de ingestão bulk (n8n, Firecrawl, automações) |
+| 🔄 | Autenticação e favoritos |
+| 📋 | Bot Telegram (digest diário + alertas) |
+| 📋 | Ranking inteligente de vagas |
+| 📋 | Recomendações com IA |
+| 📋 | Dashboard de métricas por fonte |
+| 📋 | Mais fontes de vagas |
 
-## Rotas da interface
+---
 
-- `/` lista de vagas com busca, filtros e paginação
-- `/vagas/[id]` detalhe da vaga (SSR)
-- `/favoritos` favoritos via `localStorage`
-- `/sobre` resumo do projeto
+## 🤝 Contribuindo
 
-## Validação local
+Contribuições são bem-vindas — especialmente novas fontes de vagas e melhorias no pipeline de normalização.
 
-Backend:
 ```bash
+# Fork, clone e crie uma branch
+git checkout -b feat/minha-feature
+
+# Rode os testes antes de abrir o PR
 dotnet test src/backend/Jobs.sln
-```
-
-Frontend:
-```bash
+cd src/frontend && npm run lint && npm run build
 node scripts/check-boundary-drift.mjs
-
-cd src/frontend
-npm run lint
-npm run build
 ```
+
+Veja [CONTRIBUTING.md](CONTRIBUTING.md) para o guia completo — convenções de commit, como adicionar uma nova fonte, e o que revisar antes de submeter.
+
+Abra uma [issue](../../issues) para sugerir novas fontes, reportar bugs ou discutir melhorias. Discussões abertas em [Discussions](../../discussions).
 
 ---
 
-## Using with GitHub Copilot
+## Configuração para assistentes de IA
 
-Este repositório está configurado como Copilot-ready: instruções de contexto, prompts e convenções foram alinhados com o código atual para reduzir drift entre sugestões e implementação real.
+Este repositório tem configuração pronta para **Claude Code** e **GitHub Copilot** — com instruções de contexto, slash commands e regras alinhadas ao código atual.
 
-### Configuração incluída
-
-| Arquivo | Finalidade |
-|---------|-----------|
-| `.github/copilot-instructions.md` | Instruções globais lidas pelo Copilot em todo contexto |
-| `.github/instructions/backend.instructions.md` | Regras C# / .NET ativas para `src/backend/**` |
-| `.github/instructions/frontend.instructions.md` | Regras Next.js / TypeScript ativas para `src/frontend/**` |
-| `.github/instructions/testing.instructions.md` | Convenções xUnit ativas para `src/backend/Jobs.Tests/**` |
-| `.github/prompts/new-source.prompt.md` | Prompt `/new-source` para adicionar ou configurar uma nova fonte de ingestão |
-| `.github/prompts/new-test.prompt.md` | Prompt `/new-test` para gerar ou expandir testes xUnit |
-
-### Prompts úteis
-
-**Criar ou adaptar uma nova fonte de vagas:**
-```
-/new-source
-```
-
-**Criar testes para um parser ou serviço existente:**
-```
-/new-test
-```
-
-**Exemplos de perguntas contextuais:**
-
-```
-Esta fonte cabe em CorporateCareers, JsonLd ou GupyCompanies, ou precisa de um novo IJobSource?
-```
-```
-Quais arquivos preciso revisar se eu mudar filtros, sort ou paginação da API?
-```
-```
-Como funciona a deduplicação de vagas neste projeto?
-```
-```
-Escreva um teste xUnit para o GupyJobsJsonParser usando a fixture gupy_company_jobs.json.
-```
-```
-Adicione suporte a um novo campo no frontend mantendo o boundary BFF deste projeto.
-```
-
-### O que o Copilot já sabe sobre este projeto
-
-- Não sugerir EF Migrations; o schema vive em `schema.sql`
-- Não usar `Newtonsoft.Json`; o projeto usa `System.Text.Json`
-- Não criar MVC controllers; `Jobs.Api` usa Minimal API em `Program.cs`
-- Não criar `pages/` no frontend; apenas App Router
-- Não chamar `Jobs.Api` direto do browser; usar o BFF em `app/api/`
-- Não presumir que toda fonte nova exige um `IJobSource`; primeiro revisar as famílias já existentes
+| Ferramenta | Documentação |
+|------------|-------------|
+| Claude Code | [`.claude/`](.claude/) — comandos `/new-source`, `/new-test`, `/trace-job-flow`, `/review-boundary` |
+| GitHub Copilot | [`.github/`](.github/) — instruções por stack e prompts contextuais |
 
 ---
 
-## Using with Claude Code
+## 📄 Licença
 
-Este repositório também está configurado para Claude Code com memória compartilhada, regras por stack, permissões do time e slash commands alinhados ao fluxo real do projeto.
+[MIT](LICENSE) — use, modifique e distribua como quiser.
 
-### Configuração incluída
+---
 
-| Arquivo | Finalidade |
-|---------|-----------|
-| `CLAUDE.md` | Memória compartilhada do projeto carregada na sessão |
-| `.claude/settings.json` | Permissões compartilhadas e proteções contra leitura de segredos/artefatos gerados |
-| `.claude/rules/backend.md` | Regras de backend para `src/backend/**` |
-| `.claude/rules/frontend.md` | Regras de frontend para `src/frontend/**` |
-| `.claude/rules/testing.md` | Regras de testes e fixtures |
-| `.claude/commands/new-source.md` | Slash command `/new-source` para adicionar/configurar uma nova fonte |
-| `.claude/commands/new-test.md` | Slash command `/new-test` para expandir cobertura xUnit |
-| `.claude/commands/trace-job-flow.md` | Slash command `/trace-job-flow` para rastrear o fluxo da vaga ponta a ponta |
-| `.claude/commands/review-boundary.md` | Slash command `/review-boundary` para revisar impacto cross-stack |
-| `.claude/agents/parser-reviewer.md` | Subagente de revisão de fontes, parsers e fixtures |
-| `.claude/agents/boundary-reviewer.md` | Subagente de revisão de contrato backend/BFF/frontend |
-| `.claude/hooks/*.mjs` | Hooks leves de lembrete após edições em boundary e ingestão |
-| `.claude/settings.local.example.json` | Exemplo opcional para fluxo local mais rápido |
-| `scripts/check-boundary-drift.mjs` | Guarda de CI para enums, filtros, sorts, query params e URLs backend/frontend |
+<div align="center">
 
-### Comandos úteis no Claude Code
+Feito para a comunidade de tecnologia brasileira — e para qualquer dev que quer buscar vagas sem depender de plataformas fechadas.
 
-```bash
-claude
-/new-source Greenhouse https://boards.greenhouse.io json
-/new-test GupyJobsJsonParser gupy_company_jobs.json json
-/trace-job-flow GupyExample
-/review-boundary "alteracao em filtros e sort da listagem"
-```
+**⭐ Se este projeto foi útil, considere dar uma estrela.**
 
-### Fluxo recomendado
-
-1. Se quiser um fluxo mais rápido, mescle `.claude/settings.local.example.json` no seu `.claude/settings.local.json`.
-2. Use `/memory` para editar `CLAUDE.md`.
-3. Use `/permissions` e `/config` para inspecionar o comportamento ativo.
-4. Use `/trace-job-flow` quando precisar entender o caminho completo de uma vaga, ou `/review-boundary` antes de fechar mudanças cross-stack.
-5. Os hooks do projeto adicionam lembretes leves quando você edita arquivos de ingestão ou boundary; trate-os como guardrails, não como substituto para docs e revisão.
-6. Quando as convenções do projeto mudarem, mantenha `.claude/` e `.github/` alinhados.
+</div>
