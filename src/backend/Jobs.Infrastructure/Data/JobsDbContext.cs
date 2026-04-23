@@ -36,8 +36,7 @@ public sealed class JobsDbContext : DbContext
             e.Property(x => x.ClusterId).HasMaxLength(80);
             e.Property(x => x.MetadataJson).HasColumnType("jsonb").IsRequired();
 
-            // OriginUrl: URL canônica da vaga na empresa (usada como chave de idempotência principal para ingestão externa)
-            // Para bancos existentes, executar: ALTER TABLE job_postings ADD COLUMN IF NOT EXISTS origin_url VARCHAR(1024);
+            // OriginUrl: canonical job URL from the company (used as the primary idempotency key for external ingestion)
             e.Property(x => x.OriginUrl).HasMaxLength(1024);
 
             e.Property(x => x.Tags).HasColumnType("text[]");

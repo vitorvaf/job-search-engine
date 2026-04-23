@@ -15,8 +15,9 @@ export function JobsListPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const search = searchParams.toString();
 
-  const initialFilters = useMemo(() => parseFiltersFromSearchParams(new URLSearchParams(searchParams.toString())), [searchParams]);
+  const initialFilters = useMemo(() => parseFiltersFromSearchParams(new URLSearchParams(search)), [search]);
 
   const [filters, setFilters] = useState<JobFilters>({
     ...initialFilters,
@@ -36,7 +37,15 @@ export function JobsListPage() {
   const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
-    const next = parseFiltersFromSearchParams(new URLSearchParams(searchParams.toString()));
+    const next = parseFiltersFromSearchParams(new URLSearchParams(search));
+    const currentQuery = filtersToQueryString(filters);
+    const nextQuery = filtersToQueryString({
+      ...next,
+      page: next.page || 1,
+      pageSize: next.pageSize || DEFAULT_PAGE_SIZE,
+      sort: next.sort || DEFAULT_SORT,
+    });
+    if (nextQuery === currentQuery) return;
     setFilters((prev) => ({
       ...prev,
       ...next,
@@ -44,7 +53,8 @@ export function JobsListPage() {
       pageSize: next.pageSize || DEFAULT_PAGE_SIZE,
       sort: next.sort || DEFAULT_SORT,
     }));
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -65,20 +75,19 @@ export function JobsListPage() {
     [debouncedQ, filters],
   );
 
+  const effectiveQuery = useMemo(() => filtersToQueryString(effectiveFilters), [effectiveFilters]);
+
   useEffect(() => {
-    const query = filtersToQueryString(effectiveFilters);
-    const current = searchParams.toString();
-    if (query === current) return;
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [effectiveFilters, pathname, router, searchParams]);
+    if (effectiveQuery === search) return;
+    router.replace(effectiveQuery ? `${pathname}?${effectiveQuery}` : pathname, { scroll: false });
+  }, [effectiveQuery, pathname, router, search]);
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const query = filtersToQueryString(effectiveFilters);
-      const response = await fetch(`/api/jobs?${query}`, { cache: "no-store" });
+      const response = await fetch(`/api/jobs?${effectiveQuery}`, { cache: "no-store" });
       const payload = (await response.json()) as JobsResponse | { message?: string };
 
       if (!response.ok) {
@@ -97,11 +106,12 @@ export function JobsListPage() {
     } finally {
       setLoading(false);
     }
-  }, [effectiveFilters]);
+  }, [effectiveQuery]);
 
   useEffect(() => {
     void fetchJobs();
-  }, [fetchJobs, retryToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveQuery, retryToken]);
 
   useEffect(() => {
     let cancelled = false;
