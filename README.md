@@ -117,6 +117,8 @@ dotnet run --project src/backend/Jobs.Worker -- --run-once --source=InfoJobs
 
 # 5. Rode o frontend
 cp src/frontend/.env.local.example src/frontend/.env.local
+# O arquivo .env.local deve conter:
+# BACKEND_URL=http://localhost:5004
 cd src/frontend && npm install && npm run dev
 # → http://localhost:3000
 ```
