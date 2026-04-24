@@ -14,7 +14,7 @@
     "test:e2e:favorites": "playwright test e2e/scenarios/favorites/protected-route.spec.ts"
   },
   "dependencies": {
-    "lucide-react": "^0.525.0",
+    "lucide-react": "^1.8.0",
     "next": "15.0.4",
     "next-auth": "^4.24.14",
     "react": "19.0.0",
@@ -25,10 +25,10 @@
     "@types/node": "^22.10.1",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.4.27",
     "eslint": "^9.16.0",
     "eslint-config-next": "15.0.4",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.10",
     "tailwindcss": "^3.4.16",
     "typescript": "^5.7.2"
   }
