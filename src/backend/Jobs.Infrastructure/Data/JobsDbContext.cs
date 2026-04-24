@@ -11,6 +11,11 @@ public sealed class JobsDbContext : DbContext
     public DbSet<JobPostingEntity> JobPostings => Set<JobPostingEntity>();
     public DbSet<SourceEntity> Sources => Set<SourceEntity>();
     public DbSet<IngestionRunEntity> IngestionRuns => Set<IngestionRunEntity>();
+    public DbSet<UserEntity> Users => Set<UserEntity>();
+    public DbSet<UserCredentialEntity> UserCredentials => Set<UserCredentialEntity>();
+    public DbSet<UserIdentityEntity> UserIdentities => Set<UserIdentityEntity>();
+    public DbSet<UserActionTokenEntity> UserActionTokens => Set<UserActionTokenEntity>();
+    public DbSet<FavoriteJobEntity> FavoriteJobs => Set<FavoriteJobEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +79,80 @@ public sealed class JobsDbContext : DbContext
             e.Property(x => x.Status).HasMaxLength(40).IsRequired();
             e.Property(x => x.ErrorSample).HasMaxLength(4000);
             e.HasIndex(x => x.SourceId);
+        });
+
+        modelBuilder.Entity<UserEntity>(e =>
+        {
+            e.ToTable("users");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Email).HasMaxLength(320).IsRequired();
+            e.Property(x => x.NormalizedEmail).HasMaxLength(320).IsRequired();
+            e.Property(x => x.DisplayName).HasMaxLength(160).IsRequired();
+            e.Property(x => x.AvatarUrl).HasMaxLength(1024);
+            e.Property(x => x.Status).HasMaxLength(32).IsRequired().HasDefaultValue("Active");
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            e.HasIndex(x => x.NormalizedEmail).IsUnique();
+        });
+
+        modelBuilder.Entity<UserCredentialEntity>(e =>
+        {
+            e.ToTable("user_credentials");
+            e.HasKey(x => x.UserId);
+            e.Property(x => x.PasswordHash).HasMaxLength(512).IsRequired();
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            e.Property(x => x.UpdatedAt).HasDefaultValueSql("now()");
+            e.HasOne<UserEntity>()
+                .WithOne()
+                .HasForeignKey<UserCredentialEntity>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserIdentityEntity>(e =>
+        {
+            e.ToTable("user_identities");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Provider).HasMaxLength(40).IsRequired();
+            e.Property(x => x.ProviderUserId).HasMaxLength(255).IsRequired();
+            e.Property(x => x.ProviderEmail).HasMaxLength(320);
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            e.HasIndex(x => new { x.Provider, x.ProviderUserId }).IsUnique();
+            e.HasIndex(x => x.UserId);
+            e.HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserActionTokenEntity>(e =>
+        {
+            e.ToTable("user_action_tokens");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Type).HasMaxLength(40).IsRequired();
+            e.Property(x => x.TokenHash).HasMaxLength(255).IsRequired();
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            e.HasIndex(x => new { x.Type, x.TokenHash }).IsUnique();
+            e.HasIndex(x => new { x.UserId, x.Type });
+            e.HasIndex(x => x.ExpiresAt);
+            e.HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<FavoriteJobEntity>(e =>
+        {
+            e.ToTable("favorite_jobs");
+            e.HasKey(x => new { x.UserId, x.JobPostingId });
+            e.Property(x => x.CreatedAt).HasDefaultValueSql("now()");
+            e.HasIndex(x => x.JobPostingId);
+            e.HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<JobPostingEntity>()
+                .WithMany()
+                .HasForeignKey(x => x.JobPostingId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         ApplySnakeCaseColumnNaming(modelBuilder);

@@ -76,3 +76,69 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_job_postings_source_url
 CREATE UNIQUE INDEX IF NOT EXISTS ux_job_postings_origin_url
     ON job_postings (origin_url)
     WHERE origin_url IS NOT NULL AND origin_url <> '';
+
+CREATE TABLE IF NOT EXISTS users (
+    id uuid PRIMARY KEY,
+    email varchar(320) NOT NULL,
+    normalized_email varchar(320) NOT NULL,
+    display_name varchar(160) NOT NULL DEFAULT '',
+    avatar_url varchar(1024),
+    email_verified_at timestamptz,
+    status varchar(32) NOT NULL DEFAULT 'Active',
+    created_at timestamptz NOT NULL DEFAULT now(),
+    last_login_at timestamptz
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_users_normalized_email
+    ON users (normalized_email);
+
+CREATE TABLE IF NOT EXISTS user_credentials (
+    user_id uuid PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
+    password_hash varchar(512) NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS user_identities (
+    id uuid PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    provider varchar(40) NOT NULL,
+    provider_user_id varchar(255) NOT NULL,
+    provider_email varchar(320),
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_user_identities_provider_subject
+    ON user_identities (provider, provider_user_id);
+
+CREATE INDEX IF NOT EXISTS ix_user_identities_user_id
+    ON user_identities (user_id);
+
+CREATE TABLE IF NOT EXISTS user_action_tokens (
+    id uuid PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    type varchar(40) NOT NULL,
+    token_hash varchar(255) NOT NULL,
+    expires_at timestamptz NOT NULL,
+    consumed_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_user_action_tokens_type_hash
+    ON user_action_tokens (type, token_hash);
+
+CREATE INDEX IF NOT EXISTS ix_user_action_tokens_user_type
+    ON user_action_tokens (user_id, type);
+
+CREATE INDEX IF NOT EXISTS ix_user_action_tokens_expires_at
+    ON user_action_tokens (expires_at);
+
+CREATE TABLE IF NOT EXISTS favorite_jobs (
+    user_id uuid NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    job_posting_id uuid NOT NULL REFERENCES job_postings (id) ON DELETE CASCADE,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, job_posting_id)
+);
+
+CREATE INDEX IF NOT EXISTS ix_favorite_jobs_job_posting_id
+    ON favorite_jobs (job_posting_id);

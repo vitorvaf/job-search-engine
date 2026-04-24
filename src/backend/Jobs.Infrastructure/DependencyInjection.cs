@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using Jobs.Infrastructure.BulkIngestion;
 using Jobs.Infrastructure.Data;
+using Jobs.Infrastructure.Identity;
 using Jobs.Infrastructure.Ingestion;
 using Jobs.Infrastructure.Options;
 using Jobs.Infrastructure.Search;
@@ -55,8 +56,13 @@ public static class DependencyInjection
             });
 
         services.AddSingleton<Fingerprint>();
+        services.AddSingleton<IUserPasswordHasher, UserPasswordHasher>();
+        services.AddSingleton<IUserTokenService, UserTokenService>();
         services.AddScoped<IngestionPipeline>();
         services.AddScoped<BulkJobIngestionService>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IFavoritesService, FavoritesService>();
 
         // Fontes MVP
         services.AddScoped<IJobSource, InfoJobsJobSource>();

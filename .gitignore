@@ -119,6 +119,8 @@ build/
 dist/
 *.tsbuildinfo
 .turbo/
+**/playwright-report/
+**/test-results/
 
 # React
 .env.local

@@ -23,6 +23,22 @@ export function getBackendUrl() {
   return backendUrl.replace(/\/$/, "");
 }
 
+export function getInternalApiKey() {
+  const key = process.env.BACKEND_INTERNAL_API_KEY;
+  if (!key) {
+    throw new Error("BACKEND_INTERNAL_API_KEY is not configured.");
+  }
+
+  return key;
+}
+
+export function getInternalApiHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "X-Internal-Api-Key": getInternalApiKey(),
+  } as const;
+}
+
 function parsePage(value: string | null, fallback: number) {
   const parsed = Number(value ?? "");
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;

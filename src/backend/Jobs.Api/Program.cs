@@ -3,6 +3,7 @@ using Jobs.Domain.Models;
 using Jobs.Infrastructure;
 using Jobs.Infrastructure.BulkIngestion;
 using Jobs.Infrastructure.Data;
+using Jobs.Infrastructure.Identity;
 using Jobs.Infrastructure.Options;
 using Jobs.Infrastructure.Search;
 using Microsoft.EntityFrameworkCore;
@@ -243,6 +244,376 @@ app.MapPost("/api/ingestion/jobs/bulk", async (
     return Results.Ok(response);
 });
 
+app.MapPost("/api/account/register", async (
+    RegisterAccountRequest request,
+    IAccountService accountService,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Email))
+    {
+        return ValidationProblem("email", "Email is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Password))
+    {
+        return ValidationProblem("password", "Password is required.");
+    }
+
+    var result = await accountService.RegisterLocalAsync(
+        request.Email,
+        request.DisplayName ?? string.Empty,
+        request.Password,
+        ct);
+
+    return result.Status switch
+    {
+        RegisterLocalAccountStatus.Created => Results.Created($"/api/account/users/{result.UserId}", new { userId = result.UserId }),
+        RegisterLocalAccountStatus.EmailAlreadyInUse => Results.Conflict(new { message = "Email already in use." }),
+        _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+    };
+});
+
+app.MapPost("/api/account/verify-email", async (
+    VerifyEmailRequest request,
+    IAccountService accountService,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Token))
+    {
+        return ValidationProblem("token", "Token is required.");
+    }
+
+    var result = await accountService.VerifyEmailAsync(request.Token, ct);
+    if (!result.IsSuccess)
+    {
+        return Results.BadRequest(new { message = "Invalid or expired verification token." });
+    }
+
+    return Results.Ok(new { userId = result.UserId, verified = true });
+});
+
+app.MapPost("/api/account/resend-verification", async (
+    ResendVerificationRequest request,
+    IAccountService accountService,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Email))
+    {
+        return ValidationProblem("email", "Email is required.");
+    }
+
+    var result = await accountService.ResendEmailVerificationAsync(request.Email, ct);
+
+    return result.Status switch
+    {
+        ResendEmailVerificationStatus.Sent => Results.Ok(new { sent = true }),
+        ResendEmailVerificationStatus.AlreadyVerified => Results.Ok(new { sent = false, alreadyVerified = true }),
+        ResendEmailVerificationStatus.AccountNotFound => Results.NotFound(new { message = "Account not found." }),
+        _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+    };
+});
+
+app.MapPost("/api/account/password/forgot", async (
+    ForgotPasswordRequest request,
+    IAccountService accountService,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    await accountService.RequestPasswordResetAsync(request.Email ?? string.Empty, ct);
+
+    return Results.Ok(new { message = "If the account exists, reset instructions were sent." });
+});
+
+app.MapPost("/api/account/password/reset", async (
+    ResetPasswordRequest request,
+    IAccountService accountService,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Token))
+    {
+        return ValidationProblem("token", "Token is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(request.NewPassword))
+    {
+        return ValidationProblem("newPassword", "New password is required.");
+    }
+
+    var result = await accountService.ResetPasswordAsync(request.Token, request.NewPassword, ct);
+
+    return result.Status switch
+    {
+        PasswordResetStatus.Reset => Results.Ok(new { reset = true, userId = result.UserId }),
+        PasswordResetStatus.InvalidOrExpiredToken => Results.BadRequest(new { message = "Invalid or expired reset token." }),
+        PasswordResetStatus.AccountWithoutPassword => Results.Conflict(new { message = "Account does not have local credentials." }),
+        _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+    };
+});
+
+app.MapPost("/api/account/auth/credentials", async (
+    CredentialsAuthRequest request,
+    IAccountService accountService,
+    JobsDbContext db,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+    {
+        return ValidationProblem("credentials", "Email and password are required.");
+    }
+
+    var authResult = await accountService.AuthenticateWithPasswordAsync(request.Email, request.Password, ct);
+
+    if (authResult.Status == PasswordAuthenticationStatus.EmailNotVerified)
+    {
+        return Results.Json(
+            new { message = "Email is not verified." },
+            statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    if (!authResult.IsSuccess)
+    {
+        return Results.Unauthorized();
+    }
+
+    var user = await db.Users
+        .AsNoTracking()
+        .FirstAsync(x => x.Id == authResult.UserId, ct);
+
+    return Results.Ok(new
+    {
+        userId = user.Id,
+        email = user.Email,
+        displayName = user.DisplayName,
+        avatarUrl = user.AvatarUrl
+    });
+});
+
+app.MapPost("/api/account/auth/oauth", async (
+    OAuthAuthRequest request,
+    IAccountService accountService,
+    JobsDbContext db,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Provider))
+    {
+        return ValidationProblem("provider", "Provider is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(request.ProviderUserId))
+    {
+        return ValidationProblem("providerUserId", "Provider user ID is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(request.Email))
+    {
+        return ValidationProblem("email", "Email is required.");
+    }
+
+    var result = await accountService.ResolveOAuthSignInAsync(
+        request.Provider,
+        request.ProviderUserId,
+        request.Email,
+        request.IsEmailVerified,
+        request.DisplayName,
+        request.AvatarUrl,
+        ct);
+
+    if (result.Status == OAuthSignInStatus.EmailNotVerified)
+    {
+        return Results.Json(
+            new { message = "Provider email is not verified." },
+            statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    if (!result.IsSuccess)
+    {
+        return Results.BadRequest(new { message = "Invalid OAuth payload." });
+    }
+
+    var user = await db.Users
+        .AsNoTracking()
+        .FirstAsync(x => x.Id == result.UserId, ct);
+
+    return Results.Ok(new
+    {
+        userId = user.Id,
+        email = user.Email,
+        displayName = user.DisplayName,
+        avatarUrl = user.AvatarUrl
+    });
+});
+
+app.MapGet("/api/me/favorites", async (
+    IFavoritesService favoritesService,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (!TryGetUserId(httpContext, out var userId, out var userIdError))
+    {
+        return Results.BadRequest(new { message = userIdError });
+    }
+
+    var favorites = await favoritesService.ListFavoritesAsync(userId, ct);
+    return Results.Ok(new
+    {
+        total = favorites.Count,
+        items = favorites.Select(job => new
+        {
+            id = job.Id,
+            title = job.Title,
+            company = new { name = job.CompanyName },
+            locationText = job.LocationText,
+            workMode = job.WorkMode.ToString(),
+            seniority = job.Seniority.ToString(),
+            employmentType = job.EmploymentType.ToString(),
+            tags = job.Tags,
+            postedAt = job.PostedAt,
+            capturedAt = job.CapturedAt,
+            source = new { name = job.SourceName, url = job.SourceUrl }
+        })
+    });
+});
+
+app.MapPut("/api/me/favorites/{jobId:guid}", async (
+    Guid jobId,
+    IFavoritesService favoritesService,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (!TryGetUserId(httpContext, out var userId, out var userIdError))
+    {
+        return Results.BadRequest(new { message = userIdError });
+    }
+
+    var result = await favoritesService.AddFavoriteAsync(userId, jobId, ct);
+
+    return result.Status switch
+    {
+        AddFavoriteStatus.Added => Results.Ok(new { status = "added" }),
+        AddFavoriteStatus.AlreadyExists => Results.Ok(new { status = "already_exists" }),
+        AddFavoriteStatus.UserNotFound => Results.NotFound(new { message = "User not found." }),
+        AddFavoriteStatus.JobNotFound => Results.NotFound(new { message = "Job not found." }),
+        _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+    };
+});
+
+app.MapDelete("/api/me/favorites/{jobId:guid}", async (
+    Guid jobId,
+    IFavoritesService favoritesService,
+    IOptions<AppOptions> appOptions,
+    HttpContext httpContext,
+    CancellationToken ct) =>
+{
+    SetNoStore(httpContext);
+
+    var internalAuth = EnsureInternalApiKey(httpContext, appOptions.Value);
+    if (internalAuth is not null)
+    {
+        return internalAuth;
+    }
+
+    if (!TryGetUserId(httpContext, out var userId, out var userIdError))
+    {
+        return Results.BadRequest(new { message = userIdError });
+    }
+
+    var result = await favoritesService.RemoveFavoriteAsync(userId, jobId, ct);
+
+    return result.Status switch
+    {
+        RemoveFavoriteStatus.Removed => Results.Ok(new { status = "removed" }),
+        RemoveFavoriteStatus.NotFound => Results.Ok(new { status = "not_found" }),
+        _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+    };
+});
+
 app.Run();
 
 static string[] ResolveSort(string? sort)
@@ -291,5 +662,66 @@ static string EscapeFilterValue(string value)
     return value.Replace("\\", "\\\\", StringComparison.Ordinal)
         .Replace("\"", "\\\"", StringComparison.Ordinal);
 }
+
+static void SetNoStore(HttpContext httpContext)
+{
+    httpContext.Response.Headers.CacheControl = "no-store";
+    httpContext.Response.Headers.Pragma = "no-cache";
+}
+
+static IResult? EnsureInternalApiKey(HttpContext httpContext, AppOptions appOptions)
+{
+    var expectedKey = appOptions.Auth.BffInternalApiKey;
+    if (string.IsNullOrWhiteSpace(expectedKey))
+    {
+        return null;
+    }
+
+    var providedKey = httpContext.Request.Headers["X-Internal-Api-Key"].FirstOrDefault();
+    if (string.Equals(expectedKey, providedKey, StringComparison.Ordinal))
+    {
+        return null;
+    }
+
+    return Results.Problem(
+        title: "Unauthorized",
+        detail: "X-Internal-Api-Key header is missing or invalid.",
+        statusCode: StatusCodes.Status401Unauthorized);
+}
+
+static bool TryGetUserId(HttpContext httpContext, out Guid userId, out string error)
+{
+    var raw = httpContext.Request.Headers["X-User-Id"].FirstOrDefault();
+    if (Guid.TryParse(raw, out userId))
+    {
+        error = string.Empty;
+        return true;
+    }
+
+    error = "X-User-Id header is missing or invalid.";
+    return false;
+}
+
+static IResult ValidationProblem(string field, string message)
+{
+    return Results.ValidationProblem(new Dictionary<string, string[]>
+    {
+        [field] = new[] { message }
+    });
+}
+
+public sealed record RegisterAccountRequest(string Email, string? DisplayName, string Password);
+public sealed record VerifyEmailRequest(string Token);
+public sealed record ResendVerificationRequest(string Email);
+public sealed record ForgotPasswordRequest(string? Email);
+public sealed record ResetPasswordRequest(string Token, string NewPassword);
+public sealed record CredentialsAuthRequest(string Email, string Password);
+public sealed record OAuthAuthRequest(
+    string Provider,
+    string ProviderUserId,
+    string Email,
+    bool IsEmailVerified,
+    string? DisplayName,
+    string? AvatarUrl);
 
 public partial class Program { }

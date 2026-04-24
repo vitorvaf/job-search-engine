@@ -6,15 +6,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "e2e:install": "playwright install chromium",
+    "test:e2e": "playwright test",
+    "test:e2e:auth": "playwright test e2e/scenarios/auth/login-name-logout.spec.ts",
+    "test:e2e:onboarding": "playwright test e2e/scenarios/auth/signup-verify-login.spec.ts"
   },
   "dependencies": {
     "lucide-react": "^0.525.0",
     "next": "15.0.4",
+    "next-auth": "^4.24.14",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "^22.10.1",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
