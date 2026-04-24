@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Threading.RateLimiting;
 using Jobs.Domain.Models;
 using Jobs.Infrastructure;
 using Jobs.Infrastructure.BulkIngestion;
@@ -9,7 +10,6 @@ using Jobs.Infrastructure.Search;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
