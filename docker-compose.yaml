@@ -121,6 +121,9 @@ services:
     environment:
       BACKEND_URL: http://api:5004
       BACKEND_INTERNAL_API_KEY: ${AUTH_BFF_INTERNAL_API_KEY:-dev_internal_key_change_me}
+      AUTH_SECRET: ${AUTH_SECRET:-dev_auth_secret_change_me}
+      NEXTAUTH_SECRET: ${AUTH_SECRET:-dev_auth_secret_change_me}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       # Enable file-change polling so hot reload works inside the container
       WATCHPACK_POLLING: "true"
     volumes:

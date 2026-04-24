@@ -32,11 +32,12 @@ export function getInternalApiKey() {
   return key;
 }
 
-export function getInternalApiHeaders() {
+export function getInternalApiHeaders(extraHeaders?: Record<string, string>) {
   return {
     "Content-Type": "application/json",
     "X-Internal-Api-Key": getInternalApiKey(),
-  } as const;
+    ...(extraHeaders ?? {}),
+  };
 }
 
 function parsePage(value: string | null, fallback: number) {

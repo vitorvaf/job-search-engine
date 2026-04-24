@@ -10,7 +10,8 @@
     "e2e:install": "playwright install chromium",
     "test:e2e": "playwright test",
     "test:e2e:auth": "playwright test e2e/scenarios/auth/login-name-logout.spec.ts",
-    "test:e2e:onboarding": "playwright test e2e/scenarios/auth/signup-verify-login.spec.ts"
+    "test:e2e:onboarding": "playwright test e2e/scenarios/auth/signup-verify-login.spec.ts",
+    "test:e2e:favorites": "playwright test e2e/scenarios/favorites/protected-route.spec.ts"
   },
   "dependencies": {
     "lucide-react": "^0.525.0",

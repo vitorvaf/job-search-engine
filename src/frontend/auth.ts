@@ -202,16 +202,34 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user }) {
-      if (user?.id) {
-        token.userId = user.id;
-        token.sub = user.id;
+      const userIdFromSignIn = typeof user?.id === "string" ? user.id.trim() : "";
+
+      if (userIdFromSignIn) {
+        token.userId = userIdFromSignIn;
+        token.sub = userIdFromSignIn;
+      }
+
+      if (!token.userId && typeof token.sub === "string" && token.sub.trim()) {
+        token.userId = token.sub.trim();
       }
 
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.userId ?? token.sub ?? "";
+      const resolvedUserId =
+        (typeof token.userId === "string" && token.userId.trim() ? token.userId.trim() : null) ??
+        (typeof token.sub === "string" && token.sub.trim() ? token.sub.trim() : null) ??
+        "";
+
+      if (!session.user) {
+        session.user = {
+          id: resolvedUserId,
+          name: null,
+          email: null,
+          image: null,
+        };
+      } else {
+        session.user.id = resolvedUserId;
       }
 
       return session;

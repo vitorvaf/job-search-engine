@@ -23,6 +23,11 @@ This folder contains Playwright end-to-end scenarios for the frontend.
   - Logs in via `/entrar`
   - Asserts authenticated header (user name + `Sair`)
 
+- `scenarios/favorites/protected-route.spec.ts`
+  - Tries to access `/favoritos` as guest and asserts redirect to `/entrar?callbackUrl=%2Ffavoritos`
+  - Logs in with local credentials and navigates back to `/favoritos`
+  - Asserts `/favoritos` remains accessible after reload
+
 ## Prerequisites
 
 1. Stack running (`frontend`, `api`, `postgres`, `mailpit`):

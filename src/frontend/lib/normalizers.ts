@@ -1,9 +1,11 @@
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
 import {
+  type ApiFavoritesResponse,
   type ApiJobDetail,
   type ApiJobListItem,
   type ApiJobsResponse,
   type ApiSource,
+  type FavoriteJobsResponse,
   type Job,
   type JobsResponse,
   type Source,
@@ -111,4 +113,27 @@ export function normalizeSources(raw: ApiSource[] | unknown): Source[] {
       };
     })
     .filter((item): item is Source => item !== null);
+}
+
+export function normalizeFavoriteJobsResponse(raw: ApiFavoritesResponse | unknown): FavoriteJobsResponse {
+  const data = asRecord(raw);
+  const total = safeNumber(data.total, 0);
+  const itemsRaw = Array.isArray(data.items) ? data.items : [];
+
+  const items = itemsRaw
+    .map((item) => normalizeJob(item))
+    .filter((item) => item.id)
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      company: item.company,
+      location: item.location,
+      postedAt: item.postedAt,
+      sourceName: item.sourceName,
+    }));
+
+  return {
+    total: Number.isFinite(total) ? total : items.length,
+    items,
+  };
 }

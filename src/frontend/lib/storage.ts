@@ -1,68 +1,106 @@
-import { type FavoriteJob, type Job } from "@/lib/types";
+const LEGACY_FAVORITES_KEY = "jobs:favorites";
+const LEGACY_IMPORT_MARKER_PREFIX = "jobs:favorites-imported:";
 
-const FAVORITES_KEY = "jobs:favorites";
+type LegacyFavoriteEntry = {
+  id?: string;
+};
 
-type FavoriteMap = Record<string, FavoriteJob>;
+type LegacyFavoritesMap = Record<string, LegacyFavoriteEntry>;
 
 function canUseStorage() {
   return typeof window !== "undefined";
 }
 
-function readFavoritesMap(): FavoriteMap {
-  if (!canUseStorage()) return {};
+function toImportMarkerKey(userId: string) {
+  return `${LEGACY_IMPORT_MARKER_PREFIX}${userId}`;
+}
 
-  const raw = window.localStorage.getItem(FAVORITES_KEY);
-  if (!raw) return {};
+function readLegacyFavoritesMap(): LegacyFavoritesMap {
+  if (!canUseStorage()) {
+    return {};
+  }
+
+  const raw = window.localStorage.getItem(LEGACY_FAVORITES_KEY);
+  if (!raw) {
+    return {};
+  }
 
   try {
-    const parsed = JSON.parse(raw) as FavoriteMap;
-    return parsed && typeof parsed === "object" ? parsed : {};
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === "object" ? (parsed as LegacyFavoritesMap) : {};
   } catch {
     return {};
   }
 }
 
-function writeFavoritesMap(map: FavoriteMap) {
-  if (!canUseStorage()) return;
-  window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(map));
+function writeLegacyFavoritesMap(map: LegacyFavoritesMap) {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  window.localStorage.setItem(LEGACY_FAVORITES_KEY, JSON.stringify(map));
 }
 
-export function toFavoriteSnapshot(job: Job): FavoriteJob {
-  return {
-    id: job.id,
-    title: job.title,
-    company: job.company,
-    location: job.location,
-    postedAt: job.postedAt,
-    sourceName: job.sourceName,
-  };
+export function listLegacyFavoriteIds(): string[] {
+  const map = readLegacyFavoritesMap();
+  const ids = new Set<string>();
+
+  Object.entries(map).forEach(([key, value]) => {
+    const id = typeof value?.id === "string" && value.id.trim() ? value.id : key;
+    if (id && id.trim()) {
+      ids.add(id.trim());
+    }
+  });
+
+  return [...ids];
 }
 
-export function listFavorites(): FavoriteJob[] {
-  return Object.values(readFavoritesMap());
+export function hasLegacyFavoritesToImport(): boolean {
+  return listLegacyFavoriteIds().length > 0;
 }
 
-export function isFavorite(id: string): boolean {
-  return Boolean(readFavoritesMap()[id]);
+export function keepOnlyLegacyFavorites(idsToKeep: string[]) {
+  const map = readLegacyFavoritesMap();
+  const keep = new Set(idsToKeep);
+  const next: LegacyFavoritesMap = {};
+
+  Object.entries(map).forEach(([key, value]) => {
+    const id = typeof value?.id === "string" && value.id.trim() ? value.id : key;
+    if (!id || !keep.has(id)) {
+      return;
+    }
+
+    next[key] = value;
+  });
+
+  if (Object.keys(next).length === 0) {
+    clearLegacyFavorites();
+    return;
+  }
+
+  writeLegacyFavoritesMap(next);
 }
 
-export function toggleFavorite(job: Job): boolean {
-  const map = readFavoritesMap();
+export function clearLegacyFavorites() {
+  if (!canUseStorage()) {
+    return;
+  }
 
-  if (map[job.id]) {
-    delete map[job.id];
-    writeFavoritesMap(map);
+  window.localStorage.removeItem(LEGACY_FAVORITES_KEY);
+}
+
+export function markLegacyFavoritesImported(userId: string) {
+  if (!canUseStorage() || !userId.trim()) {
+    return;
+  }
+
+  window.localStorage.setItem(toImportMarkerKey(userId), "1");
+}
+
+export function wasLegacyFavoritesImported(userId: string): boolean {
+  if (!canUseStorage() || !userId.trim()) {
     return false;
   }
 
-  map[job.id] = toFavoriteSnapshot(job);
-  writeFavoritesMap(map);
-  return true;
-}
-
-export function removeFavorite(id: string) {
-  const map = readFavoritesMap();
-  if (!map[id]) return;
-  delete map[id];
-  writeFavoritesMap(map);
+  return window.localStorage.getItem(toImportMarkerKey(userId)) === "1";
 }

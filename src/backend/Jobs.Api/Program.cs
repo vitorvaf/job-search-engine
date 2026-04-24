@@ -6,8 +6,10 @@ using Jobs.Infrastructure.Data;
 using Jobs.Infrastructure.Identity;
 using Jobs.Infrastructure.Options;
 using Jobs.Infrastructure.Search;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,79 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddJobsInfrastructure(builder.Configuration);
 builder.Services.AddHealthChecks();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, _) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        context.HttpContext.Response.Headers.CacheControl = "no-store";
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            message = "Too many requests. Please try again later."
+        });
+    };
+
+    options.AddPolicy(AuthRateLimitPolicies.Register, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ResolveRateLimitPartitionKey(httpContext),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 6,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy(AuthRateLimitPolicies.CredentialsLogin, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ResolveRateLimitPartitionKey(httpContext),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy(AuthRateLimitPolicies.ResendVerification, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ResolveRateLimitPartitionKey(httpContext),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 4,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy(AuthRateLimitPolicies.ForgotPassword, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ResolveRateLimitPartitionKey(httpContext),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 4,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.AddPolicy(AuthRateLimitPolicies.ResetPassword, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ResolveRateLimitPartitionKey(httpContext),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 6,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
 
 var app = builder.Build();
 
@@ -37,6 +112,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseRateLimiter();
 
 app.MapGet("/api/sources", async (JobsDbContext db, CancellationToken ct) =>
 {
@@ -281,7 +358,7 @@ app.MapPost("/api/account/register", async (
         RegisterLocalAccountStatus.EmailAlreadyInUse => Results.Conflict(new { message = "Email already in use." }),
         _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
     };
-});
+}).RequireRateLimiting(AuthRateLimitPolicies.Register);
 
 app.MapPost("/api/account/verify-email", async (
     VerifyEmailRequest request,
@@ -341,7 +418,7 @@ app.MapPost("/api/account/resend-verification", async (
         ResendEmailVerificationStatus.AccountNotFound => Results.NotFound(new { message = "Account not found." }),
         _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
     };
-});
+}).RequireRateLimiting(AuthRateLimitPolicies.ResendVerification);
 
 app.MapPost("/api/account/password/forgot", async (
     ForgotPasswordRequest request,
@@ -361,7 +438,7 @@ app.MapPost("/api/account/password/forgot", async (
     await accountService.RequestPasswordResetAsync(request.Email ?? string.Empty, ct);
 
     return Results.Ok(new { message = "If the account exists, reset instructions were sent." });
-});
+}).RequireRateLimiting(AuthRateLimitPolicies.ForgotPassword);
 
 app.MapPost("/api/account/password/reset", async (
     ResetPasswordRequest request,
@@ -397,7 +474,7 @@ app.MapPost("/api/account/password/reset", async (
         PasswordResetStatus.AccountWithoutPassword => Results.Conflict(new { message = "Account does not have local credentials." }),
         _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
     };
-});
+}).RequireRateLimiting(AuthRateLimitPolicies.ResetPassword);
 
 app.MapPost("/api/account/auth/credentials", async (
     CredentialsAuthRequest request,
@@ -445,7 +522,7 @@ app.MapPost("/api/account/auth/credentials", async (
         displayName = user.DisplayName,
         avatarUrl = user.AvatarUrl
     });
-});
+}).RequireRateLimiting(AuthRateLimitPolicies.CredentialsLogin);
 
 app.MapPost("/api/account/auth/oauth", async (
     OAuthAuthRequest request,
@@ -710,6 +787,29 @@ static IResult ValidationProblem(string field, string message)
     });
 }
 
+static string ResolveRateLimitPartitionKey(HttpContext context)
+{
+    var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+    if (!string.IsNullOrWhiteSpace(forwardedFor))
+    {
+        var firstIp = forwardedFor
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .FirstOrDefault();
+
+        if (!string.IsNullOrWhiteSpace(firstIp))
+        {
+            return firstIp;
+        }
+    }
+
+    if (context.Connection.RemoteIpAddress is not null)
+    {
+        return context.Connection.RemoteIpAddress.ToString();
+    }
+
+    return "unknown";
+}
+
 public sealed record RegisterAccountRequest(string Email, string? DisplayName, string Password);
 public sealed record VerifyEmailRequest(string Token);
 public sealed record ResendVerificationRequest(string Email);
@@ -723,5 +823,14 @@ public sealed record OAuthAuthRequest(
     bool IsEmailVerified,
     string? DisplayName,
     string? AvatarUrl);
+
+public static class AuthRateLimitPolicies
+{
+    public const string Register = "auth-register";
+    public const string CredentialsLogin = "auth-credentials-login";
+    public const string ResendVerification = "auth-resend-verification";
+    public const string ForgotPassword = "auth-forgot-password";
+    public const string ResetPassword = "auth-reset-password";
+}
 
 public partial class Program { }
