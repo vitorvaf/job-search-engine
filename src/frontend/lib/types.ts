@@ -132,3 +132,13 @@ export type FavoriteJob = {
   postedAt?: string;
   sourceName?: string;
 };
+
+export type ApiFavoritesResponse = {
+  total?: number;
+  items?: ApiJobListItem[];
+};
+
+export type FavoriteJobsResponse = {
+  total: number;
+  items: FavoriteJob[];
+};

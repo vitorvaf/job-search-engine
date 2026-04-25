@@ -55,6 +55,13 @@ services:
       timeout: 3s
       retries: 20
 
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: jobs_mailpit
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+
   api:
     build:
       context: .
@@ -67,6 +74,15 @@ services:
       ConnectionStrings__JobsDb: Host=postgres;Port=5432;Database=${POSTGRES_DB:-jobs};Username=${POSTGRES_USER:-jobs};Password=${POSTGRES_PASSWORD:-jobs}
       Meilisearch__BaseUrl: http://meilisearch:7700
       Meilisearch__MasterKey: ${MEILI_MASTER_KEY:-dev_master_key_change_me}
+      App__Auth__BffInternalApiKey: ${AUTH_BFF_INTERNAL_API_KEY:-dev_internal_key_change_me}
+      App__Auth__Tokens__EmailVerificationMinutes: 1440
+      App__Auth__Tokens__PasswordResetMinutes: 30
+      App__PublicUrls__FrontendBaseUrl: http://localhost:3000
+      App__Email__FromName: Jobs
+      App__Email__FromAddress: no-reply@job-search.local
+      App__Email__Smtp__Host: mailpit
+      App__Email__Smtp__Port: 1025
+      App__Email__Smtp__UseSsl: "false"
     volumes:
       - ./src:/workspace/src
     ports:
@@ -76,6 +92,8 @@ services:
         condition: service_healthy
       meilisearch:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   worker:
     build:
@@ -102,6 +120,10 @@ services:
     container_name: jobs_frontend
     environment:
       BACKEND_URL: http://api:5004
+      BACKEND_INTERNAL_API_KEY: ${AUTH_BFF_INTERNAL_API_KEY:-dev_internal_key_change_me}
+      AUTH_SECRET: ${AUTH_SECRET:-dev_auth_secret_change_me}
+      NEXTAUTH_SECRET: ${AUTH_SECRET:-dev_auth_secret_change_me}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       # Enable file-change polling so hot reload works inside the container
       WATCHPACK_POLLING: "true"
     volumes:

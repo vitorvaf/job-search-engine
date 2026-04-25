@@ -6,7 +6,43 @@ public sealed class AppOptions
     public string SearchIndexName { get; set; } = "jobs";
     public IngestionOptions Ingestion { get; set; } = new();
     public HttpSourceOptions Http { get; set; } = new();
+    public AuthOptions Auth { get; set; } = new();
+    public EmailOptions Email { get; set; } = new();
+    public PublicUrlsOptions PublicUrls { get; set; } = new();
     public SourcesOptions Sources { get; set; } = new();
+}
+
+public sealed class AuthOptions
+{
+    public string BffInternalApiKey { get; set; } = "dev_internal_key_change_me";
+    public TokenTtlOptions Tokens { get; set; } = new();
+}
+
+public sealed class TokenTtlOptions
+{
+    public int EmailVerificationMinutes { get; set; } = 24 * 60;
+    public int PasswordResetMinutes { get; set; } = 30;
+}
+
+public sealed class EmailOptions
+{
+    public string FromName { get; set; } = "Jobs";
+    public string FromAddress { get; set; } = "no-reply@job-search.local";
+    public SmtpOptions Smtp { get; set; } = new();
+}
+
+public sealed class SmtpOptions
+{
+    public string Host { get; set; } = "localhost";
+    public int Port { get; set; } = 1025;
+    public bool UseSsl { get; set; }
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+}
+
+public sealed class PublicUrlsOptions
+{
+    public string FrontendBaseUrl { get; set; } = "http://localhost:3000";
 }
 
 public sealed class IngestionOptions

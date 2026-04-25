@@ -40,6 +40,44 @@
     ]
   },
 
+  "mcp": {
+    // E2E browser automation for testing the Next.js frontend
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@0.0.70"]
+    },
+
+    // Up-to-date docs for .NET, Next.js, Meilisearch, EF Core, xUnit, Playwright
+    // Usage: add "use context7" to prompts
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+
+    // GitHub: manage PRs, issues, and code review from the agent
+    // Requires: GITHUB_TOKEN env var
+    "github": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-github"],
+      "environment": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "{env:GITHUB_TOKEN}"
+      }
+    },
+
+    // PostgreSQL: inspect schema and query data — essential since schema.sql is managed manually
+    // Requires: DATABASE_URL env var (e.g. postgresql://user:pass@localhost:5432/jobs)
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "{env:DATABASE_URL}"]
+    },
+
+    // Sequential thinking: step-by-step reasoning for complex cross-stack planning
+    "sequential-thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
+    }
+  },
+
   "permission": {
     "edit": "ask",
     "webfetch": "ask",
@@ -58,6 +96,7 @@
       "node scripts/check-boundary-drift.mjs*": "allow",
       "npm run lint*": "allow",
       "npm run build*": "allow",
+      "npx playwright*": "allow",
       "docker compose ps*": "allow",
       "rm -rf *": "deny",
       "git reset --hard*": "deny",
