@@ -14,7 +14,7 @@
     "test:e2e:favorites": "playwright test e2e/scenarios/favorites/protected-route.spec.ts"
   },
   "dependencies": {
-    "lucide-react": "^1.8.0",
+    "lucide-react": "^1.11.0",
     "next": "15.0.4",
     "next-auth": "^4.24.14",
     "react": "19.0.0",
